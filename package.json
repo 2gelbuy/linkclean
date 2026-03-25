@@ -13,7 +13,10 @@
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -26,11 +29,17 @@
     "@types/react-dom": "^18.3.1",
     "@wxt-dev/module-react": "^1.1.2",
     "autoprefixer": "^10.4.20",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.1",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.4.49",
+    "prettier": "^3.8.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.6.3",
     "vitest": "^4.1.0",
     "wxt": "^0.20.20"
+  },
+  "lint-staged": {
+    "*.{js,mjs,ts,tsx,astro,css,md,json,html}": "prettier --write"
   }
 }
