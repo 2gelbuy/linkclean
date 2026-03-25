@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "LinkClean - Clean LinkedIn Feed, Hide Ads & Noise",
+    "description": "Extension name shown in browser and CWS"
+  },
+  "extDesc": {
+    "message": "Clean your LinkedIn feed — hide promoted posts, suggested content, polls, and reshares. Focus on what matters.",
+    "description": "Extension description for CWS listing"
+  }
+}
