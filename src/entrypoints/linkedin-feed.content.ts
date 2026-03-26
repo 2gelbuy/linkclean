@@ -8,29 +8,51 @@
  * or "Feed post", then check innerText for signals like "Продвигается"/"Promoted".
  */
 
-import { getFilters, incrementHiddenCount, type FilterSettings } from '@/lib/filters';
+import {
+  getFilters,
+  incrementHiddenCount,
+  type FilterSettings,
+} from "@/lib/filters";
 
 // Promoted keywords in all LinkedIn UI languages
 const PROMOTED_KEYWORDS = [
-  'promoted', 'продвигается', 'sponsorisé', 'gesponsert',
-  'promovido', 'sponsorizzato', 'gepromoot', 'рекламна публікація',
-  'promowane', 'sponsrad', 'sponsorlu', 'dipromosikan',
+  "promoted",
+  "продвигается",
+  "sponsorisé",
+  "gesponsert",
+  "promovido",
+  "sponsorizzato",
+  "gepromoot",
+  "рекламна публікація",
+  "promowane",
+  "sponsrad",
+  "sponsorlu",
+  "dipromosikan",
 ];
 
 const SUGGESTED_KEYWORDS = [
-  'suggested', 'рекомендуется', 'рекомендовано', 'suggéré',
-  'vorgeschlagen', 'sugerido', 'suggerito', 'voorgesteld',
+  "suggested",
+  "рекомендуется",
+  "рекомендовано",
+  "suggéré",
+  "vorgeschlagen",
+  "sugerido",
+  "suggerito",
+  "voorgesteld",
 ];
 
 const NEWSLETTER_KEYWORDS = [
-  'subscribe to this newsletter', 'подпишитесь на рассылку',
-  'published a newsletter', 'опубликовал(а) рассылку',
-  'see my newsletter', 'см. мою рассылку',
+  "subscribe to this newsletter",
+  "подпишитесь на рассылку",
+  "published a newsletter",
+  "опубликовал(а) рассылку",
+  "see my newsletter",
+  "см. мою рассылку",
 ];
 
 export default defineContentScript({
-  matches: ['*://*.linkedin.com/*'],
-  runAt: 'document_idle',
+  matches: ["*://*.linkedin.com/*"],
+  runAt: "document_idle",
 
   async main() {
     let filters = await getFilters();
@@ -38,7 +60,7 @@ export default defineContentScript({
     let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && changes.linkclean_filters) {
+      if (area === "local" && changes.linkclean_filters) {
         filters = changes.linkclean_filters.newValue;
         processAllPosts();
       }
@@ -52,12 +74,17 @@ export default defineContentScript({
      */
     function getPostContainer(heading: Element): HTMLElement | null {
       // Try grandparent first (observed LinkedIn 2026 structure)
-      const grandparent = heading.parentElement?.parentElement as HTMLElement | null;
-      if (grandparent && grandparent.innerText && grandparent.innerText.length > 50) {
+      const grandparent = heading.parentElement
+        ?.parentElement as HTMLElement | null;
+      if (
+        grandparent &&
+        grandparent.innerText &&
+        grandparent.innerText.length > 50
+      ) {
         return grandparent;
       }
       // Fallback: try closest li (older LinkedIn layout)
-      const li = heading.closest('li') as HTMLElement | null;
+      const li = heading.closest("li") as HTMLElement | null;
       if (li) return li;
       // Last resort: parent
       return heading.parentElement as HTMLElement | null;
@@ -68,11 +95,15 @@ export default defineContentScript({
      * Each feed post has an h2 with text like "Публикация в ленте" / "Feed post".
      */
     function findAllPosts(): HTMLElement[] {
-      const headings = document.querySelectorAll('h2');
+      const headings = document.querySelectorAll("h2");
       const containers: HTMLElement[] = [];
       headings.forEach((h) => {
-        const text = h.textContent?.toLowerCase() ?? '';
-        if (text.includes('публикация') || text.includes('feed post') || text.includes('post in feed')) {
+        const text = h.textContent?.toLowerCase() ?? "";
+        if (
+          text.includes("публикация") ||
+          text.includes("feed post") ||
+          text.includes("post in feed")
+        ) {
           const container = getPostContainer(h);
           if (container) containers.push(container);
         }
@@ -81,7 +112,7 @@ export default defineContentScript({
     }
 
     function getPostText(post: HTMLElement): string {
-      return (post.innerText ?? '').toLowerCase();
+      return (post.innerText ?? "").toLowerCase();
     }
 
     function isPromotedPost(text: string): boolean {
@@ -94,8 +125,10 @@ export default defineContentScript({
 
     function isPollPost(post: HTMLElement): boolean {
       // Polls have radio buttons or specific poll UI
-      return post.querySelector('[role="radio"], [role="radiogroup"]') !== null
-        || post.innerHTML.includes('poll');
+      return (
+        post.querySelector('[role="radio"], [role="radiogroup"]') !== null ||
+        post.innerHTML.includes("poll")
+      );
     }
 
     function isResharePost(text: string): boolean {
@@ -104,13 +137,13 @@ export default defineContentScript({
     }
 
     function isVideoOnlyPost(post: HTMLElement): boolean {
-      const hasVideo = post.querySelector('video') !== null;
+      const hasVideo = post.querySelector("video") !== null;
       if (!hasVideo) return false;
       // Check if there's substantial text content beyond the video
-      const paragraphs = post.querySelectorAll('p');
+      const paragraphs = post.querySelectorAll("p");
       let textLength = 0;
       paragraphs.forEach((p) => {
-        const t = p.textContent?.trim() ?? '';
+        const t = p.textContent?.trim() ?? "";
         if (t.length > 5) textLength += t.length;
       });
       return textLength < 30;
@@ -133,12 +166,12 @@ export default defineContentScript({
     }
 
     function processPost(post: HTMLElement): void {
-      if (post.getAttribute('data-linkclean-processed')) return;
-      post.setAttribute('data-linkclean-processed', 'true');
+      if (post.getAttribute("data-linkclean-processed")) return;
+      post.setAttribute("data-linkclean-processed", "true");
 
       if (shouldHidePost(post, filters)) {
-        post.style.display = 'none';
-        post.setAttribute('data-linkclean-hidden', 'true');
+        post.style.display = "none";
+        post.setAttribute("data-linkclean-hidden", "true");
         pendingCount++;
         scheduleFlush();
       }
@@ -147,21 +180,21 @@ export default defineContentScript({
     function processAllPosts(): void {
       const posts = findAllPosts();
       for (const post of posts) {
-        post.removeAttribute('data-linkclean-processed');
-        const wasHidden = post.getAttribute('data-linkclean-hidden') === 'true';
+        post.removeAttribute("data-linkclean-processed");
+        const wasHidden = post.getAttribute("data-linkclean-hidden") === "true";
 
         if (shouldHidePost(post, filters)) {
-          post.style.display = 'none';
-          post.setAttribute('data-linkclean-hidden', 'true');
+          post.style.display = "none";
+          post.setAttribute("data-linkclean-hidden", "true");
           if (!wasHidden) {
             pendingCount++;
             scheduleFlush();
           }
         } else {
-          post.style.display = '';
-          post.removeAttribute('data-linkclean-hidden');
+          post.style.display = "";
+          post.removeAttribute("data-linkclean-hidden");
         }
-        post.setAttribute('data-linkclean-processed', 'true');
+        post.setAttribute("data-linkclean-processed", "true");
       }
     }
 
@@ -179,9 +212,40 @@ export default defineContentScript({
 
     function updateBadge(count: number): void {
       try {
-        chrome.runtime.sendMessage({ type: 'linkclean:hidden', count });
+        chrome.runtime.sendMessage({ type: "linkclean:hidden", count });
       } catch {
         // Background may not be active
+      }
+    }
+
+    /**
+     * Hide promoted widgets in the right sidebar.
+     * These are ad blocks with "Promoted" / "Реклама" text outside the main feed.
+     */
+    function hideSidebarAds(): void {
+      if (!filters.enabled || !filters.hideSidebarAds) return;
+
+      // Sidebar promoted ads have "Promoted" text in a visible label
+      const aside = document.querySelector("aside") ?? document.body;
+      const spans = aside.querySelectorAll("span");
+      for (const span of spans) {
+        const text = (span.textContent ?? "").toLowerCase().trim();
+        if (PROMOTED_KEYWORDS.some((kw) => text === kw)) {
+          // Walk up to find the ad container — typically 3-5 levels up
+          let container: HTMLElement | null = span as HTMLElement;
+          for (let i = 0; i < 8; i++) {
+            const parent: HTMLElement | null = container?.parentElement ?? null;
+            if (!parent || parent === aside || parent.tagName === "ASIDE")
+              break;
+            container = parent;
+          }
+          if (container && !container.getAttribute("data-linkclean-sidebar")) {
+            container.style.display = "none";
+            container.setAttribute("data-linkclean-sidebar", "true");
+            pendingCount++;
+            scheduleFlush();
+          }
+        }
       }
     }
 
@@ -199,18 +263,26 @@ export default defineContentScript({
         setTimeout(() => {
           const posts = findAllPosts();
           for (const post of posts) {
-            if (!post.getAttribute('data-linkclean-processed')) {
+            if (!post.getAttribute("data-linkclean-processed")) {
               processPost(post);
             }
           }
+          hideSidebarAds();
         }, 200);
       }
     });
 
-    const feedContainer = document.querySelector('main') ?? document.body;
+    const feedContainer = document.querySelector("main") ?? document.body;
     observer.observe(feedContainer, { childList: true, subtree: true });
 
-    // Process existing posts
+    // Also observe sidebar for lazy-loaded ads
+    const sidebarContainer = document.querySelector("aside");
+    if (sidebarContainer) {
+      observer.observe(sidebarContainer, { childList: true, subtree: true });
+    }
+
+    // Process existing posts + sidebar
     processAllPosts();
+    hideSidebarAds();
   },
 });

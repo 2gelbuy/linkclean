@@ -11,11 +11,13 @@ export interface FilterSettings {
   hideReshares: boolean;
   hideVideoOnly: boolean;
   hideNewsletterAds: boolean;
+  hideSidebarAds: boolean;
+  showBadge: boolean;
   hiddenCount: number;
   sessionHiddenCount: number;
 }
 
-const FILTERS_KEY = 'linkclean_filters';
+const FILTERS_KEY = "linkclean_filters";
 
 export const DEFAULT_FILTERS: FilterSettings = {
   enabled: true,
@@ -25,6 +27,8 @@ export const DEFAULT_FILTERS: FilterSettings = {
   hideReshares: false,
   hideVideoOnly: false,
   hideNewsletterAds: true,
+  hideSidebarAds: true,
+  showBadge: false,
   hiddenCount: 0,
   sessionHiddenCount: 0,
 };
@@ -32,7 +36,7 @@ export const DEFAULT_FILTERS: FilterSettings = {
 let cache: FilterSettings | null = null;
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes[FILTERS_KEY]) {
+  if (area === "local" && changes[FILTERS_KEY]) {
     cache = changes[FILTERS_KEY].newValue ?? null;
   }
 });
@@ -40,7 +44,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 export async function getFilters(): Promise<FilterSettings> {
   if (cache) return cache;
   const result = await chrome.storage.local.get(FILTERS_KEY);
-  const filters: FilterSettings = { ...DEFAULT_FILTERS, ...(result[FILTERS_KEY] ?? {}) };
+  const filters: FilterSettings = {
+    ...DEFAULT_FILTERS,
+    ...(result[FILTERS_KEY] ?? {}),
+  };
   cache = filters;
   return filters;
 }
