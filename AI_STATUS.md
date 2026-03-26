@@ -1,33 +1,55 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-26 21:57
+> Last updated: 2026-03-27 02:13
 
 ## Goal
 
-_What is the end goal for this project? What does success look like?_
+LinkClean — Chrome extension that cleans LinkedIn feed from promoted posts, suggested content, newsletter ads, polls, reshares, and video-only posts. Freemium model via LemonSqueezy. Published on Chrome Web Store.
+Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 
 ## In Progress
 
-_What is being worked on right now._
+(nothing active)
 
 ## Done
 
-_Completed tasks and milestones._
+- Initial extension build (WXT + React + Tailwind)
+- Content script: text-based detection for LinkedIn 2026 DOM (multilingual)
+- Popup UI with 8 filter toggles + stats
+- Background service worker with badge count
+- GA4 analytics scaffolding (Measurement Protocol, no cookies)
+- LemonSqueezy license/freemium scaffolding
+- Runware-generated icon + CWS marketing assets (screenshots, promo images)
+- Marketing analysis: competitors, positioning, pricing
+- Pre-commit hook (Prettier auto-format)
+- LinkedIn 2026 DOM selector fix
 
 ## Next Up
 
-_Planned tasks in priority order._
+1. GA4 API secret — add to enable analytics
+2. CWS submission — publish to Chrome Web Store
+3. Landing page at konabayev.com/linkclean/
+4. Uninstall feedback page at konabayev.com/linkclean/uninstall/
+5. LemonSqueezy product setup + Pro features gating
+6. Firefox build + AMO submission
+7. CWS growth: keyword optimization, review prompts
+8. Edge Add-ons submission
 
 ## Key Decisions
 
-_Important architectural, technical, or strategic decisions._
+- **WXT framework** for cross-browser extension dev
+- **Text-based detection** (not CSS classes) — LinkedIn obfuscates class names
+- **Freemium via LemonSqueezy** — no server needed for license validation
+- **GA4 Measurement Protocol** — privacy-first, no cookies
+- **Multilingual keyword matching** — 11 languages for promoted, 7 for suggested
 
 <!-- AUTO:GIT_LOG -->
 
 ## Recent Commits
 
 ```
+6a18920 auto: assets/screenshots/03-stats.png, package-lock.json, package.json, src...
 191723f feat: add pre-commit hook with Prettier auto-format
 58f4df7 feat: add Runware-generated icon and CWS marketing assets
 c36143a docs: marketing analysis â€” competitors, positioning, pricing, launch plan
@@ -44,28 +66,7 @@ f3c21c1 fix: update selectors for LinkedIn 2026 DOM structure
 Branch: `master`
 
 ```
-M assets/screenshots/03-stats.png
- M package-lock.json
- M package.json
- M src/entrypoints/background.ts
- M src/entrypoints/linkedin-feed.content.ts
- M src/entrypoints/popup/App.tsx
- M src/entrypoints/popup/index.html
- M src/lib/analytics.ts
- M src/lib/filters.ts
- M wxt.config.ts
-?? .gemini/
-?? AGENTS.md
-?? AI_STATUS.md
-?? CLAUDE.md
-?? GEMINI.md
-?? HANDOFF.md
-?? assets/screenshots/01-clean-feed.png
-?? assets/screenshots/02-filters.png
-?? assets/screenshots/04-privacy.png
-?? assets/screenshots/05-languages.png
-?? assets/screenshots/real-popup.png
-?? make-screenshots.mjs
+M AI_STATUS.md
 ```
 
 <!-- /AUTO:GIT_STATUS -->
