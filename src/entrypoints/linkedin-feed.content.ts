@@ -221,23 +221,42 @@ export default defineContentScript({
     /**
      * Hide promoted widgets in the right sidebar.
      * These are ad blocks with "Promoted" / "Реклама" text outside the main feed.
+     * Searches the entire page but skips the main feed area (handled by feed filters).
      */
     function hideSidebarAds(): void {
       if (!filters.enabled || !filters.hideSidebarAds) return;
 
-      // Sidebar promoted ads have "Promoted" text in a visible label
-      const aside = document.querySelector("aside") ?? document.body;
-      const spans = aside.querySelectorAll("span");
+      const mainFeed = document.querySelector("main");
+      const spans = document.querySelectorAll("span");
+
       for (const span of spans) {
+        // Skip spans inside the main feed — those are handled by feed filters
+        if (mainFeed && mainFeed.contains(span)) continue;
+        // Skip already-processed sidebar elements
+        if ((span as HTMLElement).closest("[data-linkclean-sidebar]")) continue;
+
         const text = (span.textContent ?? "").toLowerCase().trim();
-        if (PROMOTED_KEYWORDS.some((kw) => text === kw)) {
-          // Walk up to find the ad container — typically 3-5 levels up
+        // Match short text that equals or starts with a promoted keyword
+        // (avoids matching "promoted" inside long paragraphs)
+        if (
+          text.length < 40 &&
+          PROMOTED_KEYWORDS.some((kw) => text === kw || text.startsWith(kw))
+        ) {
+          // Walk up to find the ad container — stop at a reasonable boundary
           let container: HTMLElement | null = span as HTMLElement;
-          for (let i = 0; i < 8; i++) {
-            const parent: HTMLElement | null = container?.parentElement ?? null;
-            if (!parent || parent === aside || parent.tagName === "ASIDE")
+          for (let i = 0; i < 10; i++) {
+            const parent = container?.parentElement;
+            if (
+              !parent ||
+              parent.tagName === "BODY" ||
+              parent.tagName === "ASIDE" ||
+              parent.id === "global-nav"
+            )
               break;
             container = parent;
+            // Stop if container is large enough to be the ad widget
+            if (container.offsetHeight > 100 && container.offsetWidth > 100)
+              break;
           }
           if (container && !container.getAttribute("data-linkclean-sidebar")) {
             container.style.display = "none";
@@ -272,14 +291,8 @@ export default defineContentScript({
       }
     });
 
-    const feedContainer = document.querySelector("main") ?? document.body;
-    observer.observe(feedContainer, { childList: true, subtree: true });
-
-    // Also observe sidebar for lazy-loaded ads
-    const sidebarContainer = document.querySelector("aside");
-    if (sidebarContainer) {
-      observer.observe(sidebarContainer, { childList: true, subtree: true });
-    }
+    // Observe the entire body to catch both feed posts and lazy-loaded sidebar ads
+    observer.observe(document.body, { childList: true, subtree: true });
 
     // Process existing posts + sidebar
     processAllPosts();

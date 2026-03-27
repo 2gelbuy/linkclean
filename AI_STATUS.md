@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-27 17:50
+> Last updated: 2026-03-27 18:08
 
 ## Goal
 
@@ -49,6 +49,8 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+ab65335 auto: AI_STATUS.md
+fece9a6 auto: AI_STATUS.md, .claude/, .playwright-mcp/
 63a1877 auto: AI_STATUS.md
 9706ba4 auto: AI_STATUS.md
 6a18920 auto: assets/screenshots/03-stats.png, package-lock.json, package.json, src...
@@ -69,8 +71,7 @@ Branch: `master`
 
 ```
 M AI_STATUS.md
-?? .claude/
-?? .playwright-mcp/
+M  src/entrypoints/linkedin-feed.content.ts
 ```
 
 <!-- /AUTO:GIT_STATUS -->
