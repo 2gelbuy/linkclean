@@ -27,15 +27,17 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 - **Published on Chrome Web Store**
 - Landing page live at konabayev.com/linkclean/ (Astro, full SEO, privacy policy)
 - v1.0.1 submitted to CWS — fix: sidebar promoted ads not hidden
+- Firefox build ready (MV2, gecko ID, zip + sources)
+- Edge build ready (same Chrome MV3 zip)
 
 ## Next Up
 
 1. GA4 API secret — add to enable analytics
-2. Uninstall feedback page at konabayev.com/linkclean/uninstall/
-3. LemonSqueezy product setup + Pro features gating
-4. Firefox build + AMO submission
-5. CWS growth: keyword optimization, review prompts
-6. Edge Add-ons submission
+2. AMO submission (manual — need AMO account login)
+3. Edge Add-ons submission (manual — need Microsoft Partner account)
+4. Uninstall feedback page at konabayev.com/linkclean/uninstall/
+5. LemonSqueezy product setup + Pro features gating
+6. CWS growth: keyword optimization, review prompts
 
 ## Key Decisions
 

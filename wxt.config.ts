@@ -24,6 +24,10 @@ export default defineConfig({
     permissions: ["storage"],
     host_permissions: ["https://www.google-analytics.com/*"],
     browser_specific_settings: {
+      gecko: {
+        id: "linkclean@konabayev.com",
+        strict_min_version: "109.0",
+      },
       edge: {
         browser_action_next_to_addressbar: false,
       },
