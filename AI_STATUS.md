@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-27 18:13
+> Last updated: 2026-03-27 18:18
 
 ## Goal
 
@@ -49,6 +49,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+494aed1 auto: AI_STATUS.md
 1fc542b auto: AI_STATUS.md, src/entrypoints/linkedin-feed.content.ts
 ab65335 auto: AI_STATUS.md
 fece9a6 auto: AI_STATUS.md, .claude/, .playwright-mcp/
@@ -58,7 +59,6 @@ fece9a6 auto: AI_STATUS.md, .claude/, .playwright-mcp/
 191723f feat: add pre-commit hook with Prettier auto-format
 58f4df7 feat: add Runware-generated icon and CWS marketing assets
 c36143a docs: marketing analysis â€” competitors, positioning, pricing, launch plan
-f3c21c1 fix: update selectors for LinkedIn 2026 DOM structure
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -70,7 +70,8 @@ f3c21c1 fix: update selectors for LinkedIn 2026 DOM structure
 Branch: `master`
 
 ```
-M AI_STATUS.md
+M  package.json
+M  wxt.config.ts
 ```
 
 <!-- /AUTO:GIT_STATUS -->
