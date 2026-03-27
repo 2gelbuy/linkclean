@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-27 03:20
+> Last updated: 2026-03-27 17:50
 
 ## Goal
 
@@ -24,17 +24,17 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 - Marketing analysis: competitors, positioning, pricing
 - Pre-commit hook (Prettier auto-format)
 - LinkedIn 2026 DOM selector fix
+- **Published on Chrome Web Store**
 
 ## Next Up
 
 1. GA4 API secret — add to enable analytics
-2. CWS submission — publish to Chrome Web Store
-3. Landing page at konabayev.com/linkclean/
-4. Uninstall feedback page at konabayev.com/linkclean/uninstall/
-5. LemonSqueezy product setup + Pro features gating
-6. Firefox build + AMO submission
-7. CWS growth: keyword optimization, review prompts
-8. Edge Add-ons submission
+2. Landing page at konabayev.com/linkclean/
+3. Uninstall feedback page at konabayev.com/linkclean/uninstall/
+4. LemonSqueezy product setup + Pro features gating
+5. Firefox build + AMO submission
+6. CWS growth: keyword optimization, review prompts
+7. Edge Add-ons submission
 
 ## Key Decisions
 
