@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-27 18:18
+> Last updated: 2026-03-27 18:26
 
 ## Goal
 
@@ -25,16 +25,17 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 - Pre-commit hook (Prettier auto-format)
 - LinkedIn 2026 DOM selector fix
 - **Published on Chrome Web Store**
+- Landing page live at konabayev.com/linkclean/ (Astro, full SEO, privacy policy)
+- v1.0.1 submitted to CWS — fix: sidebar promoted ads not hidden
 
 ## Next Up
 
 1. GA4 API secret — add to enable analytics
-2. Landing page at konabayev.com/linkclean/
-3. Uninstall feedback page at konabayev.com/linkclean/uninstall/
-4. LemonSqueezy product setup + Pro features gating
-5. Firefox build + AMO submission
-6. CWS growth: keyword optimization, review prompts
-7. Edge Add-ons submission
+2. Uninstall feedback page at konabayev.com/linkclean/uninstall/
+3. LemonSqueezy product setup + Pro features gating
+4. Firefox build + AMO submission
+5. CWS growth: keyword optimization, review prompts
+6. Edge Add-ons submission
 
 ## Key Decisions
 
@@ -49,6 +50,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+8224a2e auto: package.json, wxt.config.ts
 494aed1 auto: AI_STATUS.md
 1fc542b auto: AI_STATUS.md, src/entrypoints/linkedin-feed.content.ts
 ab65335 auto: AI_STATUS.md
@@ -58,7 +60,6 @@ fece9a6 auto: AI_STATUS.md, .claude/, .playwright-mcp/
 6a18920 auto: assets/screenshots/03-stats.png, package-lock.json, package.json, src...
 191723f feat: add pre-commit hook with Prettier auto-format
 58f4df7 feat: add Runware-generated icon and CWS marketing assets
-c36143a docs: marketing analysis â€” competitors, positioning, pricing, launch plan
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -70,8 +71,7 @@ c36143a docs: marketing analysis â€” competitors, positioning, pricing, lau
 Branch: `master`
 
 ```
-M  package.json
-M  wxt.config.ts
+M  AI_STATUS.md
 ```
 
 <!-- /AUTO:GIT_STATUS -->
