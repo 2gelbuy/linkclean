@@ -1,0 +1,8 @@
+{
+  "version": {
+    "license": "MIT"
+  },
+  "categories": {
+    "firefox": ["privacy-security"]
+  }
+}
