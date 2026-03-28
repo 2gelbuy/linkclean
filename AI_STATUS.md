@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 12:41
+> Last updated: 2026-03-28 17:51
 
 ## Goal
 
@@ -55,6 +55,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+2733bb9 auto: AI_STATUS.md
 9adf666 auto: AI_STATUS.md
 78df21e auto: AI_STATUS.md
 0cb5c04 auto: AI_STATUS.md
@@ -64,7 +65,6 @@ a229693 auto: AI_STATUS.md
 f8d1a52 docs: update AI_STATUS.md with directory submission status
 211c835 auto: .playwright-mcp/console-2026-03-28T06-14-39-301Z.log
 60f0964 docs: add comprehensive directory submission guide
-3db5825 auto: AI_STATUS.md, .playwright-mcp/console-2026-03-28T06-11-43-027Z.log, ....
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -77,6 +77,11 @@ Branch: `master`
 
 ```
 M AI_STATUS.md
+ D assets/screenshots/01-before-after.png
+ D assets/screenshots/02-popup-ui.png
+ D assets/screenshots/04-multilingual.png
+ D assets/screenshots/05-privacy.png
+ D assets/screenshots/real-popup.png
 ```
 
 <!-- /AUTO:GIT_STATUS -->
