@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 10:39
+> Last updated: 2026-03-28 10:44
 
 ## Goal
 
@@ -71,6 +71,9 @@ b32c0a5 auto: AI_STATUS.md
 ## Uncommitted Changes
 
 Branch: `master`
-_Clean working tree._
+
+```
+M AI_STATUS.md
+```
 
 <!-- /AUTO:GIT_STATUS -->
