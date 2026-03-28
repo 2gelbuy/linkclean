@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 11:12
+> Last updated: 2026-03-28 11:15
 
 ## Goal
 
@@ -10,7 +10,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 
 ## In Progress
 
-(nothing active)
+- Directory & news site submissions research — created SUBMISSION_LOG.md with full guide
 
 ## Done
 
@@ -33,13 +33,14 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 
 ## Next Up
 
-1. GA4 API secret — add to enable analytics
-2. AMO submission (manual — need AMO account login)
-3. Edge Add-ons submission (manual — need Microsoft Partner account)
-4. Uninstall feedback page at konabayev.com/linkclean/uninstall/
-5. LemonSqueezy product setup + Pro features gating
-6. CWS growth: keyword optimization, review prompts
-7. Cross-post to other platforms (Hashnode, Medium, Dev.to recap)
+1. **Execute directory submissions** (see SUBMISSION_LOG.md for complete guide):
+   - Tier 1: Product Hunt, TinyHunt, Softonic, FossHub
+   - Tier 2: Reddit (r/chrome_extensions, r/Entrepreneur), HackerNews, IndieHackers
+2. GA4 API secret — add to enable analytics
+3. Uninstall feedback page at konabayev.com/linkclean/uninstall/
+4. LemonSqueezy product setup + Pro features gating
+5. Cross-post Dev.to article to Medium, Hashnode
+6. AMO (Firefox) & Edge Add-ons submissions (future browsers)
 
 ## Key Decisions
 
@@ -54,6 +55,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+3db5825 auto: AI_STATUS.md, .playwright-mcp/console-2026-03-28T06-11-43-027Z.log, ....
 6c6fc8d auto: AI_STATUS.md, .playwright-mcp/console-2026-03-28T06-11-29-819Z.log
 21f21b5 auto: AI_STATUS.md
 cf3f723 auto: .playwright-mcp/console-2026-03-28T06-04-11-722Z.log, .playwright-mcp...
@@ -63,7 +65,6 @@ d037199 auto: AI_STATUS.md
 4f3df40 auto: AI_STATUS.md
 a62ac67 auto: AI_STATUS.md
 5848b80 auto: AI_STATUS.md
-cdff3a0 auto: scripts/get-cws-token.mjs
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -76,5 +77,12 @@ Branch: `master`
 
 ```
 M AI_STATUS.md
-?? .playwright-mcp/console-2026-03-28T06-11-43-0
+A  SUBMISSION_LOG.md
+?? .playwright-mcp/console-2026-03-28T06-14-39-301Z.log
+```
+
+<!-- /AUTO:GIT_STATUS -->
+
+```
+
 ```
