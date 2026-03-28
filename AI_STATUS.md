@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 10:16
+> Last updated: 2026-03-28 10:18
 
 ## Goal
 
@@ -52,6 +52,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+993fdcb auto: AI_STATUS.md
 7c8d3f1 auto: AI_STATUS.md, scripts/get-cws-token.mjs
 683c5b9 auto: AI_STATUS.md
 0681323 auto: AI_STATUS.md
@@ -61,7 +62,6 @@ b32c0a5 auto: AI_STATUS.md
 bd869d3 auto: AI_STATUS.md, package.json, src/public/_locales/de/messages.json, src...
 dc64866 auto: AI_STATUS.md, wxt.config.ts
 f01cdda auto: AI_STATUS.md
-8224a2e auto: package.json, wxt.config.ts
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -73,7 +73,7 @@ f01cdda auto: AI_STATUS.md
 Branch: `master`
 
 ```
-M AI_STATUS.md
+D scripts/get-cws-token.mjs
 ```
 
 <!-- /AUTO:GIT_STATUS -->
