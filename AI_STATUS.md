@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 17:51
+> Last updated: 2026-03-28 23:07
 
 ## Goal
 
@@ -10,7 +10,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 
 ## In Progress
 
-- Directory & news site submissions research — created SUBMISSION_LOG.md with full guide
+- Firefox AMO — uploaded, waiting for review (slug: linkclean-linkedin-feed-cleane)
 
 ## Done
 
@@ -24,23 +24,27 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 - Marketing analysis: competitors, positioning, pricing
 - Pre-commit hook (Prettier auto-format)
 - LinkedIn 2026 DOM selector fix
-- **Published on Chrome Web Store**
+- **CWS v1.1.0 published** — sidebar ads fix + 28 locales + SEO-optimized title/desc
 - Landing page live at konabayev.com/linkclean/ (Astro, full SEO, privacy policy)
-- v1.0.1 submitted to CWS — fix: sidebar promoted ads not hidden
-- Firefox build ready (MV2, gecko ID, zip + sources)
-- Edge build ready (same Chrome MV3 zip)
-- **Dev.to article published** — "I Built a Chrome Extension to Clean My LinkedIn Feed — Here's How" (850 words, 3min read, canonical URL set)
+- CWS API auto-publish configured (publish.sh in MiranaApps)
+- Firefox AMO uploaded via web-ext sign (waiting review)
+- Dev.to article published: https://dev.to/konabayev/i-built-a-chrome-extension-to-clean-my-linkedin-feed-heres-how-541c
+- 2 GitHub Awesome list PRs: best-chrome-extensions#22, awesome-productivity#228
+- 28 CWS locales (en, ru, de, fr, es, tr, uk, pl, it, nl, sv, pt_BR, pt_PT, ja, ko, id, hi, ar, zh_CN, zh_TW, da, fi, no, cs, ro, hu, th, vi)
+- Centralized credentials in MiranaApps/.env.shared
+- Firefox AMO JWT credentials saved
+- WORKFLOW_PLAN.md — full auto + semi-auto pipeline plan
+- auto-scan.sh + build-extension.sh scripts created
 
 ## Next Up
 
-1. **Execute directory submissions** (see SUBMISSION_LOG.md for complete guide):
-   - Tier 1: Product Hunt, TinyHunt, Softonic, FossHub
-   - Tier 2: Reddit (r/chrome_extensions, r/Entrepreneur), HackerNews, IndieHackers
-2. GA4 API secret — add to enable analytics
-3. Uninstall feedback page at konabayev.com/linkclean/uninstall/
-4. LemonSqueezy product setup + Pro features gating
-5. Cross-post Dev.to article to Medium, Hashnode
-6. AMO (Firefox) & Edge Add-ons submissions (future browsers)
+1. Sync scripts to VPS + set up daily cron for auto-scan
+2. Telegram notifications (need chat_id)
+3. Edge Add-ons credentials + submission
+4. Register on: Hashnode, ProductHunt, AlternativeTo, SaaSHub (manual Google OAuth)
+5. GA4 API secret
+6. LemonSqueezy product setup + Pro features gating
+7. Test auto-scan.sh — first real niche scan
 
 ## Key Decisions
 
@@ -55,6 +59,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+17528ee auto: AI_STATUS.md, assets/screenshots/01-before-after.png, assets/screensh...
 2733bb9 auto: AI_STATUS.md
 9adf666 auto: AI_STATUS.md
 78df21e auto: AI_STATUS.md
@@ -64,7 +69,6 @@ a229693 auto: AI_STATUS.md
 66e0ace auto: AI_STATUS.md
 f8d1a52 docs: update AI_STATUS.md with directory submission status
 211c835 auto: .playwright-mcp/console-2026-03-28T06-14-39-301Z.log
-60f0964 docs: add comprehensive directory submission guide
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -76,12 +80,8 @@ f8d1a52 docs: update AI_STATUS.md with directory submission status
 Branch: `master`
 
 ```
-M AI_STATUS.md
- D assets/screenshots/01-before-after.png
- D assets/screenshots/02-popup-ui.png
- D assets/screenshots/04-multilingual.png
- D assets/screenshots/05-privacy.png
- D assets/screenshots/real-popup.png
+M  AI_STATUS.md
+M  HANDOFF.md
 ```
 
 <!-- /AUTO:GIT_STATUS -->
