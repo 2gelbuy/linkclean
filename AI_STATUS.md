@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 23:12
+> Last updated: 2026-03-28 23:17
 
 ## Goal
 
@@ -78,7 +78,10 @@ f8d1a52 docs: update AI_STATUS.md with directory submission status
 ## Uncommitted Changes
 
 Branch: `master`
-_Clean working tree._
+
+```
+M AI_STATUS.md
+```
 
 <!-- /AUTO:GIT_STATUS -->
 
