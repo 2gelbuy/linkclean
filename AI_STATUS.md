@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-03-28 10:57
+> Last updated: 2026-03-28 11:04
 
 ## Goal
 
@@ -29,6 +29,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 - v1.0.1 submitted to CWS — fix: sidebar promoted ads not hidden
 - Firefox build ready (MV2, gecko ID, zip + sources)
 - Edge build ready (same Chrome MV3 zip)
+- **Dev.to article published** — "I Built a Chrome Extension to Clean My LinkedIn Feed — Here's How" (850 words, 3min read, canonical URL set)
 
 ## Next Up
 
@@ -38,6 +39,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 4. Uninstall feedback page at konabayev.com/linkclean/uninstall/
 5. LemonSqueezy product setup + Pro features gating
 6. CWS growth: keyword optimization, review prompts
+7. Cross-post to other platforms (Hashnode, Medium, Dev.to recap)
 
 ## Key Decisions
 
@@ -52,6 +54,7 @@ Success = 1000+ active users, positive reviews, Pro upgrade revenue.
 ## Recent Commits
 
 ```
+de3d722 auto: AI_STATUS.md
 d037199 auto: AI_STATUS.md
 4f3df40 auto: AI_STATUS.md
 a62ac67 auto: AI_STATUS.md
@@ -61,7 +64,6 @@ cdff3a0 auto: scripts/get-cws-token.mjs
 7c8d3f1 auto: AI_STATUS.md, scripts/get-cws-token.mjs
 683c5b9 auto: AI_STATUS.md
 0681323 auto: AI_STATUS.md
-935e56f auto: AI_STATUS.md
 ```
 
 <!-- /AUTO:GIT_LOG -->
@@ -73,7 +75,7 @@ cdff3a0 auto: scripts/get-cws-token.mjs
 Branch: `master`
 
 ```
-M AI_STATUS.md
+MM AI_STATUS.md
 ```
 
 <!-- /AUTO:GIT_STATUS -->
