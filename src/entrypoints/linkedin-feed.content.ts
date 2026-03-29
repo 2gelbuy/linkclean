@@ -245,7 +245,7 @@ export default defineContentScript({
           // Walk up to find the ad container — stop at a reasonable boundary
           let container: HTMLElement | null = span as HTMLElement;
           for (let i = 0; i < 10; i++) {
-            const parent = container?.parentElement;
+            const parent: HTMLElement | null = container?.parentElement ?? null;
             if (
               !parent ||
               parent.tagName === "BODY" ||
@@ -255,7 +255,7 @@ export default defineContentScript({
               break;
             container = parent;
             // Stop if container is large enough to be the ad widget
-            if (container.offsetHeight > 100 && container.offsetWidth > 100)
+            if (container!.offsetHeight > 100 && container!.offsetWidth > 100)
               break;
           }
           if (container && !container.getAttribute("data-linkclean-sidebar")) {

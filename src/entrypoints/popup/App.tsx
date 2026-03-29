@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Shield, ShieldOff, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { Shield, ShieldOff, Eye, EyeOff, BarChart3, X } from "lucide-react";
 import {
   getFilters,
   updateFilters,
@@ -7,7 +7,7 @@ import {
   DEFAULT_FILTERS,
 } from "@/lib/filters";
 import { trackEvent } from "@/lib/analytics";
-import { trackSession } from "@/lib/storage";
+import { trackSession, getSettings, updateSettings } from "@/lib/storage";
 
 interface ToggleProps {
   label: string;
@@ -61,10 +61,12 @@ function Toggle({
 export default function App() {
   const [filters, setFilters] = useState<FilterSettings>(DEFAULT_FILTERS);
   const [sessionCount, setSessionCount] = useState(0);
+  const [reviewDismissed, setReviewDismissed] = useState(true);
 
   useEffect(() => {
     trackEvent("popup_open");
     trackSession().then(setSessionCount);
+    getSettings().then((s) => setReviewDismissed(s.reviewDismissed));
     getFilters().then(setFilters);
 
     const listener = (
@@ -196,9 +198,9 @@ export default function App() {
         />
       </main>
 
-      {/* Footer */}
-      {sessionCount >= 5 && (
-        <footer className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-center">
+      {/* Review Prompt */}
+      {sessionCount >= 3 && !reviewDismissed && (
+        <footer className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <a
             href="https://chromewebstore.google.com/detail/linkclean/ipdckibncofmlnoaajkdhnbclbpgppdg/reviews"
             target="_blank"
@@ -208,6 +210,17 @@ export default function App() {
           >
             Enjoying LinkClean? Leave a review!
           </a>
+          <button
+            onClick={() => {
+              setReviewDismissed(true);
+              updateSettings({ reviewDismissed: true });
+              trackEvent("review_prompt_dismiss");
+            }}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2"
+            aria-label="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </footer>
       )}
     </div>

@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "LinkClean — LinkedIn Feed Cleaner | Hide Promoted, Ads & Suggested Posts",
-    "description": "Extension name shown in browser and CWS"
+    "message": "LinkedIn Feed Cleaner - Hide Ads, Spam & Promoted Posts",
+    "description": "Extension name shown in browser and CWS. Primary keyword first for CWS ranking."
   },
   "extDesc": {
-    "message": "LinkedIn feed cleaner — hide promoted posts, suggested content, polls, reshares & newsletter ads. 20+ languages. No tracking.",
-    "description": "Extension description for CWS listing"
+    "message": "Clean your LinkedIn feed — hide promoted posts, suggested content, polls, reshares & newsletter ads. 28 languages. Free.",
+    "description": "Extension description for CWS listing. 132 chars max for summary visibility."
   }
 }
