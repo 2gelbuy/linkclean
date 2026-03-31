@@ -22,7 +22,10 @@ export default defineConfig({
       128: "icon/128.png",
     },
     permissions: ["storage"],
-    host_permissions: ["https://www.google-analytics.com/*"],
+    host_permissions: [
+      "https://www.google-analytics.com/*",
+      "https://api.lemonsqueezy.com/*",
+    ],
     browser_specific_settings: {
       gecko: {
         id: "linkclean@konabayev.com",

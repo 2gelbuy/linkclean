@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "LinkedIn Feed Cleaner - Hide Ads, Spam & Promoted Posts",
+    "message": "LinkedIn Feed Cleaner - Filter Ads, Spam & Promoted Posts",
     "description": "Extension name shown in browser and CWS. Primary keyword first for CWS ranking."
   },
   "extDesc": {
-    "message": "Clean your LinkedIn feed — hide promoted posts, suggested content, polls, reshares & newsletter ads. 28 languages. Free.",
+    "message": "Clean your LinkedIn feed — filter promoted posts, suggested content, polls, reshares & newsletter ads. 28 languages. Free.",
     "description": "Extension description for CWS listing. 132 chars max for summary visibility."
   }
 }
