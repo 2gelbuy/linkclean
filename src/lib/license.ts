@@ -10,6 +10,29 @@
  * No server needed — validation via LemonSqueezy API directly.
  */
 
+/**
+ * LemonSqueezy checkout URL for LinkClean Pro ($4.99/mo).
+ * TODO: Replace with actual LemonSqueezy checkout URL after creating product.
+ */
+export const CHECKOUT_URL = 'https://konabayev.com/linkclean/#pro';
+
+/**
+ * Filter keys that require Pro to enable.
+ */
+const PRO_FILTERS = new Set([
+  'hidePolls',
+  'hideReshares',
+  'hideVideoOnly',
+  'hideSidebarAds',
+]);
+
+/**
+ * Returns true if the given filter key requires a Pro license.
+ */
+export function isProFilter(filterKey: string): boolean {
+  return PRO_FILTERS.has(filterKey);
+}
+
 const STORAGE_KEY = 'mirana_license';
 
 export interface LicenseState {
