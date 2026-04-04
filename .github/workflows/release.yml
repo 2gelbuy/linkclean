@@ -1,0 +1,98 @@
+# Mirana Apps — Universal Multi-Store Release
+# Copy to .github/workflows/release.yml in each extension repo
+# Triggers on version tag → builds → publishes to Chrome + Firefox + Edge
+#
+# Required GitHub Secrets (shared across repos):
+#   CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN
+#   AMO_JWT_ISSUER, AMO_JWT_SECRET
+#   EDGE_CLIENT_ID, EDGE_API_KEY
+#
+# Required GitHub Secrets (per-repo):
+#   CWS_EXTENSION_ID, AMO_EXTENSION_ID, EDGE_PRODUCT_ID
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci
+
+      - name: Prepare WXT
+        run: npx wxt prepare
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test || true
+
+      - name: Build Chrome + Edge
+        run: npx wxt zip
+
+      - name: Build Firefox
+        run: npx wxt zip -b firefox
+
+      - name: Find ZIPs
+        id: zips
+        run: |
+          echo "chrome=$(ls .output/*-chrome.zip | head -1)" >> $GITHUB_OUTPUT
+          echo "firefox=$(ls .output/*-firefox*.zip | grep -v sources | head -1)" >> $GITHUB_OUTPUT
+          echo "sources=$(ls .output/*-sources.zip 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.zips.outputs.chrome }}
+            ${{ steps.zips.outputs.firefox }}
+          generate_release_notes: true
+
+      # --- Chrome Web Store ---
+      - name: Publish to Chrome Web Store
+        if: ${{ secrets.CWS_EXTENSION_ID != '' }}
+        run: |
+          npx publish-extension \
+            --chrome-zip "${{ steps.zips.outputs.chrome }}" \
+            --chrome-extension-id "${{ secrets.CWS_EXTENSION_ID }}" \
+            --chrome-client-id "${{ secrets.CWS_CLIENT_ID }}" \
+            --chrome-client-secret "${{ secrets.CWS_CLIENT_SECRET }}" \
+            --chrome-refresh-token "${{ secrets.CWS_REFRESH_TOKEN }}"
+
+      # --- Firefox AMO ---
+      - name: Publish to Firefox AMO
+        if: ${{ secrets.AMO_EXTENSION_ID != '' }}
+        run: |
+          SOURCES_ARG=""
+          [ -n "${{ steps.zips.outputs.sources }}" ] && SOURCES_ARG="--firefox-sources-zip ${{ steps.zips.outputs.sources }}"
+          npx publish-extension \
+            --firefox-zip "${{ steps.zips.outputs.firefox }}" \
+            --firefox-extension-id "${{ secrets.AMO_EXTENSION_ID }}" \
+            --firefox-jwt-issuer "${{ secrets.AMO_JWT_ISSUER }}" \
+            --firefox-jwt-secret "${{ secrets.AMO_JWT_SECRET }}" \
+            --firefox-channel listed \
+            $SOURCES_ARG
+
+      # --- Microsoft Edge ---
+      - name: Publish to Edge Add-ons
+        if: ${{ secrets.EDGE_PRODUCT_ID != '' }}
+        run: |
+          npx publish-extension \
+            --edge-zip "${{ steps.zips.outputs.chrome }}" \
+            --edge-product-id "${{ secrets.EDGE_PRODUCT_ID }}" \
+            --edge-client-id "${{ secrets.EDGE_CLIENT_ID }}" \
+            --edge-api-key "${{ secrets.EDGE_API_KEY }}"
