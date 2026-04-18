@@ -1,9 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './style.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./style.css";
+import { initAnalytics, track } from "@/lib/posthog";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+void initAnalytics("linkclean").then(() =>
+  track("popup_open", { path: "popup" }),
+);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
