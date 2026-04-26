@@ -3,7 +3,7 @@
  * Not loaded in content script (linkedin-feed.content.ts) — CSP + privacy concerns.
  * Respects user opt-out via chrome.storage.local[analytics_opt_out] = true.
  */
-import posthog, { type PostHog } from "posthog-js";
+import posthog, { type PostHogInterface } from "posthog-js";
 
 const POSTHOG_KEY = import.meta.env.WXT_POSTHOG_KEY as string | undefined;
 const POSTHOG_HOST =
@@ -35,7 +35,7 @@ export async function initAnalytics(extensionName: string): Promise<void> {
     persistence: "localStorage",
     autocapture: false,
     disable_session_recording: true,
-    loaded: (ph: PostHog) => {
+    loaded: (ph: PostHogInterface) => {
       ph.register({
         extension_name: extensionName,
         extension_version: chrome.runtime.getManifest().version,

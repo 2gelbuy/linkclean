@@ -1,0 +1,80 @@
+# Mirana Apps — Standard Extension CI
+# Copy to .github/workflows/ci.yml in each extension repo.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Prepare WXT
+        run: npx wxt prepare
+
+      - name: Select typecheck command
+        id: typecheck
+        shell: bash
+        run: |
+          node - <<'NODE' >> "$GITHUB_OUTPUT"
+          const scripts = require('./package.json').scripts || {};
+          if (scripts.typecheck) {
+            console.log('cmd=npm run typecheck');
+          } else if (scripts.compile) {
+            console.log('cmd=npm run compile');
+          } else {
+            console.log('cmd=npx tsc --noEmit');
+          }
+          NODE
+
+      - name: Type check
+        run: ${{ steps.typecheck.outputs.cmd }}
+
+      - name: Detect tests
+        id: tests
+        shell: bash
+        run: |
+          node - <<'NODE' >> "$GITHUB_OUTPUT"
+          const scripts = require('./package.json').scripts || {};
+          console.log(`has_test=${Boolean(scripts.test)}`);
+          NODE
+
+      - name: Test
+        if: steps.tests.outputs.has_test == 'true'
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Zip
+        run: npm run zip
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zips
+          path: .output/*.zip
+          if-no-files-found: error

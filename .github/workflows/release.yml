@@ -1,33 +1,36 @@
-# Mirana Apps — Universal Multi-Store Release
-# Copy to .github/workflows/release.yml in each extension repo
-# Triggers on version tag → builds → publishes to Chrome + Firefox + Edge
-#
-# Required GitHub Secrets (shared across repos):
-#   CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN
-#   AMO_JWT_ISSUER, AMO_JWT_SECRET
-#   EDGE_CLIENT_ID, EDGE_API_KEY
-#
-# Required GitHub Secrets (per-repo):
-#   CWS_EXTENSION_ID, AMO_EXTENSION_ID, EDGE_PRODUCT_ID
+# Mirana Apps — Gated Multi-Store Release
+# Copy to .github/workflows/release.yml in each extension repo.
+# Configure the `production-store` GitHub environment with required reviewers.
 
 name: Release
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      chrome_zip: ${{ steps.zips.outputs.chrome }}
+      firefox_zip: ${{ steps.zips.outputs.firefox }}
+      sources_zip: ${{ steps.zips.outputs.sources }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install
         run: npm ci
@@ -35,64 +38,170 @@ jobs:
       - name: Prepare WXT
         run: npx wxt prepare
 
+      - name: Validate tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "v$VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version v$VERSION"
+            exit 1
+          fi
+
+      - name: Select typecheck command
+        id: typecheck
+        shell: bash
+        run: |
+          node - <<'NODE' >> "$GITHUB_OUTPUT"
+          const scripts = require('./package.json').scripts || {};
+          if (scripts.typecheck) {
+            console.log('cmd=npm run typecheck');
+          } else if (scripts.compile) {
+            console.log('cmd=npm run compile');
+          } else {
+            console.log('cmd=npx tsc --noEmit');
+          }
+          NODE
+
       - name: Type check
-        run: npx tsc --noEmit
+        run: ${{ steps.typecheck.outputs.cmd }}
+
+      - name: Detect tests
+        id: tests
+        shell: bash
+        run: |
+          node - <<'NODE' >> "$GITHUB_OUTPUT"
+          const scripts = require('./package.json').scripts || {};
+          console.log(`has_test=${Boolean(scripts.test)}`);
+          NODE
 
       - name: Test
-        run: npm test || true
+        if: steps.tests.outputs.has_test == 'true'
+        run: npm test
 
-      - name: Build Chrome + Edge
-        run: npx wxt zip
+      - name: Build Chrome + Edge zip
+        run: npm run zip
 
-      - name: Build Firefox
-        run: npx wxt zip -b firefox
+      - name: Build Firefox zip if supported
+        shell: bash
+        run: |
+          if node -e "process.exit(require('./package.json').scripts?.['zip:firefox'] ? 0 : 1)"; then
+            npm run zip:firefox
+          else
+            echo "No zip:firefox script; skipping Firefox artifact."
+          fi
 
       - name: Find ZIPs
         id: zips
+        shell: bash
         run: |
-          echo "chrome=$(ls .output/*-chrome.zip | head -1)" >> $GITHUB_OUTPUT
-          echo "firefox=$(ls .output/*-firefox*.zip | grep -v sources | head -1)" >> $GITHUB_OUTPUT
-          echo "sources=$(ls .output/*-sources.zip 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
+          echo "chrome=$(ls .output/*-chrome.zip | head -1)" >> "$GITHUB_OUTPUT"
+          echo "firefox=$(ls .output/*-firefox*.zip 2>/dev/null | grep -v sources | head -1 || true)" >> "$GITHUB_OUTPUT"
+          echo "sources=$(ls .output/*-sources.zip 2>/dev/null | head -1 || true)" >> "$GITHUB_OUTPUT"
+
+      - name: Write release manifest
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const { execSync } = require('child_process');
+          const pkg = require('./package.json');
+          const files = fs.readdirSync('.output').filter((f) => f.endsWith('.zip')).sort();
+          const artifacts = files.map((file) => {
+            const data = fs.readFileSync(`.output/${file}`);
+            return {
+              file,
+              sha256: crypto.createHash('sha256').update(data).digest('hex'),
+              bytes: data.length,
+            };
+          });
+          fs.writeFileSync(
+            'release-manifest.json',
+            JSON.stringify({
+              name: pkg.name,
+              version: pkg.version,
+              git_ref: process.env.GITHUB_REF_NAME,
+              commit: execSync('git rev-parse HEAD').toString().trim(),
+              created_at: new Date().toISOString(),
+              artifacts,
+            }, null, 2),
+          );
+          NODE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ steps.zips.outputs.chrome }}
-            ${{ steps.zips.outputs.firefox }}
+            .output/*.zip
+            release-manifest.json
           generate_release_notes: true
 
-      # --- Chrome Web Store ---
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            .output/*.zip
+            release-manifest.json
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production-store
+    env:
+      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID || secrets.CWS_EXTENSION_ID }}
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID || secrets.CWS_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET || secrets.CWS_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN || secrets.CWS_REFRESH_TOKEN }}
+      FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID || secrets.AMO_EXTENSION_ID }}
+      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER || secrets.AMO_JWT_ISSUER }}
+      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET || secrets.AMO_JWT_SECRET }}
+      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID || secrets.EDGE_STORE_ID }}
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Publish to Chrome Web Store
-        if: ${{ secrets.CWS_EXTENSION_ID != '' }}
+        if: ${{ env.CHROME_EXTENSION_ID != '' }}
         run: |
           npx publish-extension \
-            --chrome-zip "${{ steps.zips.outputs.chrome }}" \
-            --chrome-extension-id "${{ secrets.CWS_EXTENSION_ID }}" \
-            --chrome-client-id "${{ secrets.CWS_CLIENT_ID }}" \
-            --chrome-client-secret "${{ secrets.CWS_CLIENT_SECRET }}" \
-            --chrome-refresh-token "${{ secrets.CWS_REFRESH_TOKEN }}"
+            --chrome-zip "${{ needs.build.outputs.chrome_zip }}" \
+            --chrome-extension-id "$CHROME_EXTENSION_ID" \
+            --chrome-client-id "$CHROME_CLIENT_ID" \
+            --chrome-client-secret "$CHROME_CLIENT_SECRET" \
+            --chrome-refresh-token "$CHROME_REFRESH_TOKEN"
 
-      # --- Firefox AMO ---
       - name: Publish to Firefox AMO
-        if: ${{ secrets.AMO_EXTENSION_ID != '' }}
+        if: ${{ env.FIREFOX_EXTENSION_ID != '' && needs.build.outputs.firefox_zip != '' }}
+        shell: bash
         run: |
           SOURCES_ARG=""
-          [ -n "${{ steps.zips.outputs.sources }}" ] && SOURCES_ARG="--firefox-sources-zip ${{ steps.zips.outputs.sources }}"
+          [ -n "${{ needs.build.outputs.sources_zip }}" ] && SOURCES_ARG="--firefox-sources-zip ${{ needs.build.outputs.sources_zip }}"
           npx publish-extension \
-            --firefox-zip "${{ steps.zips.outputs.firefox }}" \
-            --firefox-extension-id "${{ secrets.AMO_EXTENSION_ID }}" \
-            --firefox-jwt-issuer "${{ secrets.AMO_JWT_ISSUER }}" \
-            --firefox-jwt-secret "${{ secrets.AMO_JWT_SECRET }}" \
+            --firefox-zip "${{ needs.build.outputs.firefox_zip }}" \
+            --firefox-extension-id "$FIREFOX_EXTENSION_ID" \
+            --firefox-jwt-issuer "$FIREFOX_JWT_ISSUER" \
+            --firefox-jwt-secret "$FIREFOX_JWT_SECRET" \
             --firefox-channel listed \
             $SOURCES_ARG
 
-      # --- Microsoft Edge ---
       - name: Publish to Edge Add-ons
-        if: ${{ secrets.EDGE_PRODUCT_ID != '' }}
+        if: ${{ env.EDGE_PRODUCT_ID != '' }}
         run: |
           npx publish-extension \
-            --edge-zip "${{ steps.zips.outputs.chrome }}" \
-            --edge-product-id "${{ secrets.EDGE_PRODUCT_ID }}" \
-            --edge-client-id "${{ secrets.EDGE_CLIENT_ID }}" \
-            --edge-api-key "${{ secrets.EDGE_API_KEY }}"
+            --edge-zip "${{ needs.build.outputs.chrome_zip }}" \
+            --edge-product-id "$EDGE_PRODUCT_ID" \
+            --edge-client-id "$EDGE_CLIENT_ID" \
+            --edge-api-key "$EDGE_API_KEY"
