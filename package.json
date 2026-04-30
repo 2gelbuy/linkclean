@@ -1,6 +1,6 @@
 {
   "name": "linkclean",
-  "version": "1.3.0",
+  "version": "1.3.3",
   "description": "LinkClean — LinkedIn Feed Cleaner, Filter Ads & Promoted Posts",
   "type": "module",
   "scripts": {
@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
-    "posthog-js": "^1.369.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

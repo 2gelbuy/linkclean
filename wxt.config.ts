@@ -2,7 +2,7 @@ import { defineConfig } from "wxt";
 
 const EXT_NAME = "__MSG_extName__";
 const EXT_DESC = "__MSG_extDesc__";
-const EXT_VERSION = "1.3.0";
+const EXT_VERSION = "1.3.3";
 const EXT_HOMEPAGE = "https://konabayev.com/linkclean/";
 
 export default defineConfig({
@@ -22,10 +22,7 @@ export default defineConfig({
       128: "icon/128.png",
     },
     permissions: ["storage"],
-    host_permissions: [
-      "https://www.google-analytics.com/*",
-      "https://api.lemonsqueezy.com/*",
-    ],
+    host_permissions: ["https://www.google-analytics.com/*"],
     browser_specific_settings: {
       gecko: {
         id: "linkclean@konabayev.com",
