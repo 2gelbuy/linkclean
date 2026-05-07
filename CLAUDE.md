@@ -1,7 +1,16 @@
+# Local Claude Instructions
+
+<!-- root-claude-rules -->
+@/home/tugelbay/Projects/CLAUDE.md
+
+Root Claude rules apply first. These local notes only add project-specific context.
+
+---
+
 # LinkClean — LinkedIn Feed Cleaner
 
-> Part of Mirana Apps portfolio. Parent: C:\Projects\MiranaApps\CLAUDE.md
-> CWS knowledge: C:\Brain\Knowledge\cws-unified.md
+> Part of Mirana Apps portfolio. Parent: /home/tugelbay/Projects/MiranaApps/CLAUDE.md
+> CWS knowledge: /mnt/c/Brain/Knowledge/cws-unified.md
 
 ## This Extension
 
