@@ -1,0 +1,107 @@
+language: en-US
+early_access: true
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  review_details: true
+  changed_files_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: true
+  suggested_reviewers: true
+  commit_status: true
+  fail_commit_status: true
+  collapse_walkthrough: true
+  poem: false
+  abort_on_close: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 5
+    base_branches:
+      - main
+      - master
+  path_filters:
+    - "!dist/**"
+    - "!build/**"
+    - "!coverage/**"
+    - "!node_modules/**"
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Review for correctness, revenue impact, browser-extension security, permissions minimization, maintainability, and operational risk.
+    - path: "manifest.json"
+      instructions: |
+        Check host permissions, optional permissions, CSP, extension privacy claims, and Chrome Web Store compliance.
+    - path: "entrypoints/**/*.ts"
+      instructions: |
+        Check content-script isolation, storage safety, listener cleanup, and user-data handling.
+  pre_merge_checks:
+    title:
+      mode: error
+      requirements: "Use a clear conventional prefix such as feat:, fix:, chore:, docs:, perf:, refactor:, test:, or ci:."
+    description:
+      mode: warning
+    custom_checks:
+      - name: "No secrets"
+        mode: error
+        instructions: "Fail if the diff adds API keys, tokens, cookies, private keys, auth files, .env contents, or credential-like values."
+      - name: "Extension permissions safe"
+        mode: error
+        instructions: "Fail if extension permissions or host_permissions expand without clear justification and matching user value."
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    simplify:
+      enabled: true
+    custom:
+      - name: "tighten validation"
+        instructions: "Propose the smallest useful test, lint, smoke check, or store-compliance check for the changed surface."
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 900000
+    gitleaks:
+      enabled: true
+    trufflehog:
+      enabled: true
+    opengrep:
+      enabled: true
+    eslint:
+      enabled: true
+    biome:
+      enabled: true
+    markdownlint:
+      enabled: true
+    actionlint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    yamllint:
+      enabled: true
+
+chat:
+  auto_reply: true
+  allow_non_org_members: false
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
+  web_search:
+    enabled: true
