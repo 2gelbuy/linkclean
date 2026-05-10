@@ -3,7 +3,7 @@ early_access: true
 
 reviews:
   profile: assertive
-  request_changes_workflow: true
+  request_changes_workflow: false
   high_level_summary: true
   high_level_summary_in_walkthrough: true
   review_status: true
@@ -18,7 +18,7 @@ reviews:
   auto_apply_labels: true
   suggested_reviewers: true
   commit_status: true
-  fail_commit_status: true
+  fail_commit_status: false
   collapse_walkthrough: true
   poem: false
   abort_on_close: true
@@ -26,7 +26,7 @@ reviews:
     enabled: true
     drafts: false
     auto_incremental_review: true
-    auto_pause_after_reviewed_commits: 5
+    auto_pause_after_reviewed_commits: 0
     base_branches:
       - main
       - master
