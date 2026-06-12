@@ -24,6 +24,62 @@ import {
 const POST_HIDDEN_ATTR = "data-linkclean-hidden";
 const SIDEBAR_HIDDEN_ATTR = "data-linkclean-sidebar";
 const PREVIOUS_DISPLAY_ATTR = "data-linkclean-previous-display";
+const HIDE_STYLE_ID = "linkclean-hide-style";
+
+const OBSERVED_ATTRIBUTES = [
+  "aria-label",
+  "aria-describedby",
+  "title",
+  "alt",
+  "data-test-id",
+  "data-promoted-tracking-control-name",
+  "data-sponsored-tracking-url",
+  "data-view-tracking-scope",
+  "data-finite-scroll-hotkey-item",
+  "data-urn",
+  "data-id",
+  "componentkey",
+];
+
+/**
+ * Hide via stylesheet keyed on our marker attribute, not inline styles.
+ * LinkedIn re-renders overwrite element.style and would un-hide posts while
+ * the marker attribute survives — the CSS rule keeps them hidden.
+ *
+ * When the promoted filter is active on the feed, also pre-hide elements
+ * carrying LinkedIn's own sponsored markers so ads never paint at all
+ * (no visible-then-hidden flash while the JS pass catches up).
+ */
+function buildHideStyleContent(
+  filters: FilterSettings,
+  onFeedSurface: boolean,
+): string {
+  const rules = [
+    `[${POST_HIDDEN_ATTR}="true"], [${SIDEBAR_HIDDEN_ATTR}="true"] { display: none !important; }`,
+  ];
+
+  if (onFeedSurface && filters.enabled && filters.hidePromoted) {
+    rules.push(
+      "main article[data-sponsored-tracking-url], " +
+        "main [data-urn*='promoted'], " +
+        "main [data-id*='promoted'] { display: none !important; }",
+    );
+  }
+
+  return rules.join("\n");
+}
+
+function ensureHideStyle(content: string): void {
+  let style = document.getElementById(HIDE_STYLE_ID) as HTMLStyleElement | null;
+  if (!style || !style.isConnected) {
+    style = document.createElement("style");
+    style.id = HIDE_STYLE_ID;
+    (document.head ?? document.documentElement).appendChild(style);
+  }
+  if (style.textContent !== content) {
+    style.textContent = content;
+  }
+}
 
 export default defineContentScript({
   matches: ["*://*.linkedin.com/*"],
@@ -34,11 +90,12 @@ export default defineContentScript({
     let pendingCount = 0;
     let flushTimer: ReturnType<typeof setTimeout> | null = null;
     let processTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastProcessedAt = 0;
     let currentPathname = window.location.pathname;
 
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "local" && changes.linkclean_filters) {
-        filters = changes.linkclean_filters.newValue;
+        filters = changes.linkclean_filters.newValue ?? filters;
         scheduleProcessAll();
       }
     });
@@ -58,8 +115,6 @@ export default defineContentScript({
     function hideManagedElement(element: HTMLElement, attr: string): boolean {
       if (element.getAttribute(attr) === "true") return false;
 
-      element.setAttribute(PREVIOUS_DISPLAY_ATTR, element.style.display);
-      element.style.display = "none";
       element.setAttribute(attr, "true");
       return true;
     }
@@ -67,14 +122,19 @@ export default defineContentScript({
     function restoreManagedElement(element: HTMLElement, attr: string): void {
       if (element.getAttribute(attr) !== "true") return;
 
-      const previousDisplay = element.getAttribute(PREVIOUS_DISPLAY_ATTR) ?? "";
-      if (previousDisplay) {
-        element.style.display = previousDisplay;
-      } else {
-        element.style.removeProperty("display");
-      }
       element.removeAttribute(attr);
-      element.removeAttribute(PREVIOUS_DISPLAY_ATTR);
+
+      // Cleanup for elements hidden by older LinkClean versions that used
+      // inline display styles.
+      const previousDisplay = element.getAttribute(PREVIOUS_DISPLAY_ATTR);
+      if (previousDisplay !== null) {
+        if (previousDisplay) {
+          element.style.display = previousDisplay;
+        } else {
+          element.style.removeProperty("display");
+        }
+        element.removeAttribute(PREVIOUS_DISPLAY_ATTR);
+      }
     }
 
     function restoreAllManagedElements(): void {
@@ -108,13 +168,23 @@ export default defineContentScript({
       }
     }
 
+    function runProcessPass(): void {
+      lastProcessedAt = Date.now();
+      ensureHideStyle(buildHideStyleContent(filters, isActiveFeedSurface()));
+      processAllPosts();
+      hideSidebarAds();
+    }
+
     function scheduleProcessAll(): void {
-      if (processTimer) clearTimeout(processTimer);
+      // Leading+trailing throttle, not debounce: LinkedIn's feed mutates
+      // continuously while scrolling, and a resetting debounce would starve
+      // processing. After a quiet period the first batch runs immediately.
+      if (processTimer) return;
+      const delay = Date.now() - lastProcessedAt > 600 ? 0 : 250;
       processTimer = setTimeout(() => {
-        processAllPosts();
-        hideSidebarAds();
         processTimer = null;
-      }, 250);
+        runProcessPass();
+      }, delay);
     }
 
     function scheduleFlush(): void {
@@ -240,7 +310,23 @@ export default defineContentScript({
       }
     }
 
-    // MutationObserver — watch for new posts added to the feed
+    function shouldProcessMutation(mutation: MutationRecord): boolean {
+      if (mutation.type === "childList") {
+        return mutation.addedNodes.length > 0;
+      }
+
+      if (mutation.type === "characterData") {
+        return true;
+      }
+
+      if (mutation.type === "attributes") {
+        return OBSERVED_ATTRIBUTES.includes(mutation.attributeName ?? "");
+      }
+
+      return false;
+    }
+
+    // MutationObserver — watch for new posts and lazy-loaded ad labels
     const observer = new MutationObserver((mutations) => {
       let hasNewNodes = false;
       const pathnameChanged = currentPathname !== window.location.pathname;
@@ -249,7 +335,7 @@ export default defineContentScript({
       }
 
       for (const mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
+        if (shouldProcessMutation(mutation)) {
           hasNewNodes = true;
           break;
         }
@@ -260,10 +346,15 @@ export default defineContentScript({
     });
 
     // Observe the entire body to catch both feed posts and lazy-loaded sidebar ads
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: OBSERVED_ATTRIBUTES,
+    });
 
     // Process existing posts + sidebar
-    processAllPosts();
-    hideSidebarAds();
+    runProcessPass();
   },
 });

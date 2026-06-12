@@ -1,6 +1,6 @@
 {
   "name": "linkclean",
-  "version": "1.3.3",
+  "version": "1.3.5",
   "description": "LinkClean — LinkedIn Feed Cleaner, Filter Ads & Promoted Posts",
   "type": "module",
   "scripts": {
