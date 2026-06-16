@@ -562,11 +562,26 @@ function hasStrictMetadataKeyword(
 }
 
 export function hasPromotedStructuralMarker(post: HTMLElement): boolean {
-  return (
+  if (
     post.matches(PROMOTED_ROOT_ONLY_SELECTOR) ||
-    post.matches(PROMOTED_STRUCTURAL_SELECTOR) ||
-    post.querySelector(PROMOTED_STRUCTURAL_SELECTOR) !== null
-  );
+    post.matches(PROMOTED_STRUCTURAL_SELECTOR)
+  ) {
+    return true;
+  }
+
+  // Only the post's own card wrappers (depth-1 children) count — never the
+  // full subtree. LinkedIn embeds sponsored-tracked sub-components (social
+  // proof chips, "promoted by your network" rails, tracking beacons) deep
+  // inside organic posts; a subtree scan matched those and hid the entire
+  // feed. An ad's marker sits on the card root or its immediate wrapper, so
+  // a direct-child check still catches real ads without the false positives.
+  for (const child of Array.from(post.children)) {
+    if ((child as HTMLElement).matches(PROMOTED_STRUCTURAL_SELECTOR)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function hasPromotedLabel(post: HTMLElement): boolean {
