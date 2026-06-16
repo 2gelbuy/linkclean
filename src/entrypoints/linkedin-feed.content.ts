@@ -59,10 +59,15 @@ function buildHideStyleContent(
   ];
 
   if (onFeedSurface && filters.enabled && filters.hidePromoted) {
+    // Anti-flash pre-hide for LinkedIn's own ad-tracking attributes only,
+    // scoped to the post card (`article`). The previous `[data-urn*='promoted']`
+    // / `[data-id*='promoted']` substring rules could match a feed or
+    // aggregation container and blank the whole feed with no restore path.
+    // Promoted-URN cases are still handled by the JS pass (root-anchored).
     rules.push(
       "main article[data-sponsored-tracking-url], " +
-        "main [data-urn*='promoted'], " +
-        "main [data-id*='promoted'] { display: none !important; }",
+        "main article[data-promoted-tracking-control-name] " +
+        "{ display: none !important; }",
     );
   }
 

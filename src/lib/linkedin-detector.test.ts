@@ -453,6 +453,74 @@ describe("LinkedIn feed detector", () => {
     expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(false);
   });
 
+  it("does not hide an organic post that only embeds a sponsored-tracked sub-component deep in its subtree", () => {
+    // Regression for the v1.3.5 "hid every post" report: a full-subtree
+    // querySelector for sponsored markers matched LinkedIn's embedded
+    // tracking beacons / social-proof chips inside organic posts.
+    const document = render(`
+      <main data-testid="mainFeed">
+        <article data-id="main-feed-card">
+          <p componentkey="actor-line"><span>Priya Shah</span></p>
+          <p>Sharing what worked for our team this hiring season.</p>
+          <section class="feed-social-context">
+            <div>
+              <span data-sponsored-tracking-url="https://www.linkedin.com/li/track"></span>
+            </div>
+          </section>
+        </article>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(false);
+  });
+
+  it("still hides an ad whose sponsored marker is on a direct card wrapper", () => {
+    const document = render(`
+      <main data-testid="mainFeed">
+        <article data-id="main-feed-card">
+          <div data-sponsored-tracking-url="https://www.linkedin.com/li/track">
+            <p>Short ad creative without any visible label text at all.</p>
+          </div>
+        </article>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
+  });
+
+  it("hides only the promoted card in a multi-post feed, leaving organic siblings visible", () => {
+    const document = render(`
+      <main data-testid="mainFeed">
+        <article data-id="main-feed-card">
+          <p componentkey="actor-line"><span>Priya Shah</span></p>
+          <p>First organic update with a healthy amount of body text here.</p>
+        </article>
+        <article data-id="main-feed-card" data-sponsored-tracking-url="https://www.linkedin.com/li/track">
+          <p componentkey="actor-line"><span>Acme Inc</span></p>
+          <p>Promoted creative pushing a product launch this week.</p>
+        </article>
+        <article data-id="main-feed-card">
+          <p componentkey="actor-line"><span>Sam Lee</span></p>
+          <p>Second organic update, also with enough text to be a real post.</p>
+        </article>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(3);
+    const hidden = posts.filter((post) =>
+      shouldHideLinkedInPost(post, baseFilters),
+    );
+    expect(hidden).toHaveLength(1);
+    expect(hidden[0].getAttribute("data-sponsored-tracking-url")).toBe(
+      "https://www.linkedin.com/li/track",
+    );
+  });
+
   it("does not hide organic posts that merely mention poll in body copy", () => {
     const document = render(`
       <main>
