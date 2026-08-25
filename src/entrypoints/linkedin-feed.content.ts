@@ -39,6 +39,8 @@ const OBSERVED_ATTRIBUTES = [
   "data-urn",
   "data-id",
   "componentkey",
+  "data-testid",
+  "role",
 ];
 
 /**

@@ -7,6 +7,14 @@ const POST_HEADING_KEYWORDS = [
   "пост в ленте",
 ];
 
+const FEED_ROOT_SELECTOR =
+  "[data-testid='mainFeed'], [data-test-id='mainFeed']";
+
+const CURRENT_FEED_CARD_SELECTORS = [
+  "[data-testid='mainFeed'] [role='listitem']",
+  "[data-test-id='mainFeed'] [role='listitem']",
+];
+
 const POST_CONTAINER_SELECTORS = [
   "article",
   "[role='article']",
@@ -19,6 +27,7 @@ const POST_CONTAINER_SELECTORS = [
   "[data-test-id*='feed-activity']",
   // 2026 feed rewrite (data-testid="mainFeed" surface)
   "article[data-id='main-feed-card']",
+  ...CURRENT_FEED_CARD_SELECTORS,
   "li.feed-item",
   "[data-sponsored-tracking-url]",
 ];
@@ -32,6 +41,7 @@ const POST_IDENTITY_SELECTORS = [
   "[data-view-name='feed-full-update']",
   "[data-test-id*='feed-activity']",
   "article[data-id='main-feed-card']",
+  ...CURRENT_FEED_CARD_SELECTORS,
   "li.feed-item",
   "[data-sponsored-tracking-url]",
 ];
@@ -236,6 +246,27 @@ const BODY_TEXT_SELECTORS = [
   "[data-test-id*='commentary']",
 ];
 
+const ADAPTIVE_SIGNAL_SELECTOR = [
+  "p[componentkey]",
+  "[aria-label]",
+  "[title]",
+  "img[alt]",
+  PROMOTED_STRUCTURAL_SELECTOR,
+  PROMOTED_ROOT_ONLY_SELECTOR,
+  ".visually-hidden",
+  "[class*='visually-hidden']",
+  "[class*='sub-description']",
+  "[class*='supplementary']",
+].join(",");
+
+const ADAPTIVE_METADATA_TEXT_SELECTOR = [
+  "p[componentkey]",
+  ".visually-hidden",
+  "[class*='visually-hidden']",
+  "[class*='sub-description']",
+  "[class*='supplementary']",
+].join(",");
+
 function getElementText(element: Element): string {
   // textContent (not innerText): no forced reflow, and it still works on
   // posts we already hid with display:none.
@@ -347,10 +378,23 @@ function hasSocialActionControls(element: Element): boolean {
   const actionPattern =
     /^(like|comment|repost|share|send|react|open reactions|нравится|коммент|репост|отправить)\b/i;
 
+  const labelledControls = Array.from(
+    element.querySelectorAll("button[aria-label], a[aria-label]"),
+  );
+
+  const recognizedActions = labelledControls.filter((node) =>
+    actionPattern.test((node.getAttribute("aria-label") ?? "").trim()),
+  ).length;
+
+  if (recognizedActions >= 2) return true;
+
+  // LinkedIn localizes action labels and its current experimental DOM can use
+  // div[role=button] without aria-label. A real action bar has a cluster of
+  // controls; actor/header areas normally have at most one or two. This branch
+  // is only used after a strict promoted/suggested signal anchored the search.
   return (
-    Array.from(element.querySelectorAll("button[aria-label], a[aria-label]"))
-      .map((node) => node.getAttribute("aria-label") ?? "")
-      .filter((label) => actionPattern.test(label.trim())).length >= 2
+    labelledControls.length >= 4 ||
+    element.querySelectorAll("[role='button']").length >= 3
   );
 }
 
@@ -400,6 +444,117 @@ function addUniquePost(posts: HTMLElement[], post: HTMLElement | null): void {
   posts.push(post);
 }
 
+function findFeedRoots(root: ParentNode): HTMLElement[] {
+  const explicitRoots = Array.from(
+    root.querySelectorAll(FEED_ROOT_SELECTOR),
+  ) as HTMLElement[];
+
+  if (root instanceof HTMLElement && root.matches(FEED_ROOT_SELECTOR)) {
+    explicitRoots.unshift(root);
+  }
+  if (explicitRoots.length > 0) return Array.from(new Set(explicitRoots));
+
+  // Keep one semantic fallback so a future LinkedIn rewrite can drop the
+  // data-testid without disabling strict label recovery. The content script
+  // calls this detector only on /feed; candidate selection below still refuses
+  // to return the <main> boundary itself.
+  const semanticRoots = Array.from(
+    root.querySelectorAll("main"),
+  ) as HTMLElement[];
+  if (root instanceof HTMLElement && root.matches("main")) {
+    semanticRoots.unshift(root);
+  }
+  return Array.from(new Set(semanticRoots));
+}
+
+function getAdaptiveAttributeTexts(element: Element): string[] {
+  return [
+    element.getAttribute("aria-label"),
+    element.getAttribute("title"),
+    element.getAttribute("alt"),
+    element.getAttribute("data-promoted-tracking-control-name"),
+  ]
+    .map((value) => normalizeText(value ?? ""))
+    .filter(Boolean);
+}
+
+function getAdaptiveMetadataTexts(element: Element): string[] {
+  if (!element.matches(ADAPTIVE_METADATA_TEXT_SELECTOR)) return [];
+
+  const texts = new Set<string>();
+  const addText = (value: string): void => {
+    const text = normalizeText(value);
+    if (text && text.length <= MAX_LABEL_TEXT_LENGTH) texts.add(text);
+  };
+
+  addText(getElementText(element));
+  element.querySelectorAll(":scope > span").forEach((span) => {
+    addText(getElementText(span));
+  });
+
+  return Array.from(texts);
+}
+
+function hasAdaptiveFeedLabelSignal(element: Element): boolean {
+  if (
+    element.matches(PROMOTED_STRUCTURAL_SELECTOR) ||
+    element.matches(PROMOTED_ROOT_ONLY_SELECTOR)
+  ) {
+    return true;
+  }
+
+  const attributeSignal = getAdaptiveAttributeTexts(element).some((text) =>
+    hasAnyFeedLabelSignal(text),
+  );
+  if (attributeSignal) return true;
+
+  // Metadata text is stricter than accessibility attributes. This prevents an
+  // organic body sentence containing "promoted" from becoming a card seed.
+  return getAdaptiveMetadataTexts(element).some(
+    (text) => STRICT_PROMOTED_SET.has(text) || STRICT_SUGGESTED_SET.has(text),
+  );
+}
+
+function getAdaptivePostContainer(
+  signal: Element,
+  feedRoot: HTMLElement,
+): HTMLElement | null {
+  const semanticContainer = signal.closest(
+    "article, [role='article'], [role='listitem'], li",
+  ) as HTMLElement | null;
+  if (
+    semanticContainer &&
+    semanticContainer !== feedRoot &&
+    feedRoot.contains(semanticContainer)
+  ) {
+    return semanticContainer;
+  }
+
+  // The strict signal may be the unknown card root itself (for example a
+  // data-view-tracking-scope marker), so evaluate it before walking upward.
+  let candidate = signal instanceof HTMLElement ? signal : signal.parentElement;
+  for (let depth = 0; candidate && depth < 10; depth++) {
+    if (candidate === feedRoot || !feedRoot.contains(candidate)) break;
+
+    const textLength = getElementText(candidate).length;
+    if (textLength > 40 && hasSocialActionControls(candidate)) {
+      return candidate;
+    }
+    candidate = candidate.parentElement as HTMLElement | null;
+  }
+
+  return null;
+}
+
+function addAdaptiveSignalPosts(root: ParentNode, posts: HTMLElement[]): void {
+  for (const feedRoot of findFeedRoots(root)) {
+    feedRoot.querySelectorAll(ADAPTIVE_SIGNAL_SELECTOR).forEach((signal) => {
+      if (!hasAdaptiveFeedLabelSignal(signal)) return;
+      addUniquePost(posts, getAdaptivePostContainer(signal, feedRoot));
+    });
+  }
+}
+
 export function findLinkedInFeedPosts(
   root: ParentNode = document,
 ): HTMLElement[] {
@@ -427,6 +582,12 @@ export function findLinkedInFeedPosts(
       addUniquePost(posts, getPostContainerFromHeading(heading));
     }
   });
+
+  // Also recover cards anchored by strict metadata/accessibility signals. Run
+  // this on mixed DOMs too: LinkedIn can roll out a new wrapper to only some
+  // cards during an experiment, so "known posts exist" is not proof that every
+  // ad uses the same wrapper. The candidate selector stays deliberately narrow.
+  addAdaptiveSignalPosts(root, posts);
 
   return posts;
 }

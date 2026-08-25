@@ -145,6 +145,7 @@ jobs:
             .output/*.zip
             release-manifest.json
           if-no-files-found: error
+          include-hidden-files: true
 
   publish:
     needs: build
