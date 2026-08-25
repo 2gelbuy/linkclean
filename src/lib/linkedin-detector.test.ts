@@ -325,6 +325,125 @@ describe("LinkedIn feed detector", () => {
     expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
   });
 
+  it("hides only the promoted role=listitem card in the current LinkedIn feed DOM", () => {
+    const document = render(`
+      <main data-testid="mainFeed">
+        <div role="listitem">
+          <p componentkey="actor-line"><span>Priya Shah</span></p>
+          <p>First organic update with enough body text to be a real post.</p>
+        </div>
+        <div role="listitem">
+          <p componentkey="actor-line"><span>Promoted</span></p>
+          <p>Promoted creative pushing a product launch this week.</p>
+        </div>
+        <div role="listitem">
+          <p componentkey="actor-line"><span>Sam Lee</span></p>
+          <p>Second organic update with enough body text to be a real post.</p>
+        </div>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+    const hidden = posts.filter((post) =>
+      shouldHideLinkedInPost(post, baseFilters),
+    );
+
+    expect(posts).toHaveLength(3);
+    expect(hidden).toHaveLength(1);
+    expect(hidden[0].getAttribute("role")).toBe("listitem");
+    expect(hidden[0].textContent).toContain("Promoted creative");
+  });
+
+  it("recovers a promoted card from strict metadata when wrapper selectors change", () => {
+    const document = render(`
+      <main>
+        <section data-future-feed-shell>
+          <div data-future-card>
+            <p componentkey="actor-line"><span>Promoted</span></p>
+            <p>Future-DOM ad creative with no known card selector.</p>
+            <button aria-label="Like this post">Like</button>
+            <button aria-label="Comment on this post">Comment</button>
+          </div>
+        </section>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].hasAttribute("data-future-card")).toBe(true);
+    expect(posts[0].matches("main")).toBe(false);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
+  });
+
+  it("recovers an unknown promoted wrapper with localized action labels", () => {
+    const document = render(`
+      <main>
+        <section data-future-card>
+          <p componentkey="actor-line"><span>Promoted</span></p>
+          <p>Future-DOM ad creative with localized controls.</p>
+          <button aria-label="J’aime">J’aime</button>
+          <button aria-label="Commenter">Commenter</button>
+          <button aria-label="Republier">Republier</button>
+          <button aria-label="Envoyer">Envoyer</button>
+        </section>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].hasAttribute("data-future-card")).toBe(true);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
+  });
+
+  it("lifts a direct sponsored marker to its unknown card wrapper", () => {
+    const document = render(`
+      <main>
+        <section data-future-card>
+          <div data-sponsored-tracking-url="https://www.linkedin.com/li/track"></div>
+          <p>Future-DOM ad creative identified by a structural marker.</p>
+          <button aria-label="Like this post">Like</button>
+          <button aria-label="Comment on this post">Comment</button>
+        </section>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].hasAttribute("data-future-card")).toBe(true);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
+  });
+
+  it("uses an unknown structural-signal card root without climbing past it", () => {
+    const document = render(`
+      <main>
+        <section data-future-card data-view-tracking-scope='{"sponsored":true}'>
+          <p>Future-DOM ad creative marked on the unknown card root.</p>
+          <button aria-label="Like this post">Like</button>
+          <button aria-label="Comment on this post">Comment</button>
+        </section>
+      </main>
+    `);
+    const posts = findLinkedInFeedPosts(document);
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].hasAttribute("data-future-card")).toBe(true);
+    expect(shouldHideLinkedInPost(posts[0], baseFilters)).toBe(true);
+  });
+
+  it("does not seed adaptive detection from an organic body-text mention", () => {
+    const document = render(`
+      <main data-testid="mainFeed">
+        <section data-future-card>
+          <p componentkey="actor-line"><span>Priya Shah</span></p>
+          <p>Promoted</p>
+          <button aria-label="Like this post">Like</button>
+          <button aria-label="Comment on this post">Comment</button>
+        </section>
+      </main>
+    `);
+
+    expect(findLinkedInFeedPosts(document)).toHaveLength(0);
+  });
+
   it("hides posts that carry LinkedIn's sponsored tracking attributes", () => {
     const document = render(`
       <main>
