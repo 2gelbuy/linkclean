@@ -6,8 +6,21 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish_chrome:
+        description: Publish to Chrome Web Store
+        type: boolean
+        default: true
+      publish_firefox:
+        description: Publish to Firefox AMO
+        type: boolean
+        default: true
+      publish_edge:
+        description: Publish to Microsoft Edge Add-ons
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -24,8 +37,9 @@ jobs:
       chrome_zip: ${{ steps.zips.outputs.chrome }}
       firefox_zip: ${{ steps.zips.outputs.firefox }}
       sources_zip: ${{ steps.zips.outputs.sources }}
+      release_tag: ${{ steps.release_meta.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - uses: actions/setup-node@v4
         with:
@@ -129,9 +143,15 @@ jobs:
           );
           NODE
 
+      - name: Resolve release tag
+        id: release_meta
+        shell: bash
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
           files: |
             .output/*.zip
             release-manifest.json
@@ -166,6 +186,8 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
       - uses: actions/download-artifact@v4
         with:
           name: release-artifacts
@@ -173,36 +195,51 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
 
       - name: Publish to Chrome Web Store
-        if: ${{ env.CHROME_EXTENSION_ID != '' }}
+        id: chrome
+        if: ${{ (github.event_name == 'push' || inputs.publish_chrome) && env.CHROME_EXTENSION_ID != '' }}
+        continue-on-error: true
         run: |
-          npx publish-extension \
+          npx wxt submit \
             --chrome-zip "${{ needs.build.outputs.chrome_zip }}" \
-            --chrome-extension-id "$CHROME_EXTENSION_ID" \
-            --chrome-client-id "$CHROME_CLIENT_ID" \
-            --chrome-client-secret "$CHROME_CLIENT_SECRET" \
-            --chrome-refresh-token "$CHROME_REFRESH_TOKEN"
+            --chrome-extension-id "$CHROME_EXTENSION_ID"
 
       - name: Publish to Firefox AMO
-        if: ${{ env.FIREFOX_EXTENSION_ID != '' && needs.build.outputs.firefox_zip != '' }}
+        id: firefox
+        if: ${{ (github.event_name == 'push' || inputs.publish_firefox) && env.FIREFOX_EXTENSION_ID != '' && needs.build.outputs.firefox_zip != '' }}
+        continue-on-error: true
         shell: bash
         run: |
-          SOURCES_ARG=""
-          [ -n "${{ needs.build.outputs.sources_zip }}" ] && SOURCES_ARG="--firefox-sources-zip ${{ needs.build.outputs.sources_zip }}"
-          npx publish-extension \
+          SOURCES_ARGS=()
+          if [ -n "${{ needs.build.outputs.sources_zip }}" ]; then
+            SOURCES_ARGS+=(--firefox-sources-zip "${{ needs.build.outputs.sources_zip }}")
+          fi
+          npx wxt submit \
             --firefox-zip "${{ needs.build.outputs.firefox_zip }}" \
             --firefox-extension-id "$FIREFOX_EXTENSION_ID" \
-            --firefox-jwt-issuer "$FIREFOX_JWT_ISSUER" \
-            --firefox-jwt-secret "$FIREFOX_JWT_SECRET" \
             --firefox-channel listed \
-            $SOURCES_ARG
+            "${SOURCES_ARGS[@]}"
 
       - name: Publish to Edge Add-ons
-        if: ${{ env.EDGE_PRODUCT_ID != '' }}
+        id: edge
+        if: ${{ (github.event_name == 'push' || inputs.publish_edge) && env.EDGE_PRODUCT_ID != '' }}
+        continue-on-error: true
         run: |
-          npx publish-extension \
+          npx wxt submit \
             --edge-zip "${{ needs.build.outputs.chrome_zip }}" \
-            --edge-product-id "$EDGE_PRODUCT_ID" \
-            --edge-client-id "$EDGE_CLIENT_ID" \
-            --edge-api-key "$EDGE_API_KEY"
+            --edge-product-id "$EDGE_PRODUCT_ID"
+
+      - name: Fail if a configured store publication failed
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [ "${{ steps.chrome.outcome }}" = "failure" ] || \
+             [ "${{ steps.firefox.outcome }}" = "failure" ] || \
+             [ "${{ steps.edge.outcome }}" = "failure" ]; then
+            exit 1
+          fi
