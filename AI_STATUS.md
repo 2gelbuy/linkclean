@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-08-26 (v1.3.7 public on CWS/Firefox; Edge pending)
+> Last updated: 2026-08-26 (v1.3.7 public on CWS/Firefox; CWS screenshot cleanup pending review; Edge pending)
 
 ## Goal
 
@@ -9,6 +9,20 @@ LinkClean — browser extension that cleans LinkedIn feed from promoted posts, s
 Success = 1000+ active users and positive reviews before reintroducing any paid tier.
 
 ## In Progress
+
+- **CWS marketing identity cleanup submitted (2026-08-26):** removed the
+  first hero screenshot containing a fictional personal/company profile from
+  both the localized and global CWS screenshot groups. Each group
+  now contains screenshots 2–5. The dashboard saved the listing, accepted the
+  review submission, and reports `Ожидает рассмотрения` with automatic
+  publication after approval enabled. The currently published listing may keep
+  showing the previous hero until review completes. The tracked old hero PNG
+  was removed locally so it cannot be re-uploaded accidentally; Git history can
+  restore it if needed. Its editable HTML source now uses the neutral copy
+  `Your profile` / `Your professional headline` and a built-in-imagegen neutral
+  avatar for both profile positions. Two direct raster-edit attempts were not
+  uploaded because imagegen returned `1586x992`, while CWS requires exactly
+  `1280x800` or `640x400`.
 
 - **v1.3.7 adaptive LinkedIn feed fix merged and released to CWS/Firefox
   (2026-08-26):** current
@@ -106,7 +120,8 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
    publisher account that owns product `91c40340-8f47-426f-adb0-2ba51223fc92`,
    upload the same Chrome ZIP, and verify the accepted operation before calling
    Edge `1.3.7` submitted.
-1. Monitor Edge Add-ons review/public listing propagation for LinkClean **v1.3.4**.
+1. After Edge credentials are restored and **v1.3.7** is submitted, monitor
+   Edge Add-ons review and public-listing propagation for that version.
 1. Watch uninstall feedback and CWS private WAU after the v1.3.4 fix; latest private CWS funnel is `552` impressions -> `48` page views -> `63` installs -> `7` WAU.
 1. Handle Firefox `data_collection_permissions` before the next AMO policy deadline; current build warning says future submissions may require it.
 1. Confirm whether the live CWS `1.3.0` publish used local `publish.sh` / manual CWS upload path and document the exact release path.
