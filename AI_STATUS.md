@@ -1,7 +1,7 @@
 # Project Status
 
 > Auto-updated. Read this before starting any work.
-> Last updated: 2026-08-26 (v1.3.7 merged; Firefox public; CWS/Edge credentials blocked)
+> Last updated: 2026-08-26 (v1.3.7 public on CWS/Firefox; CWS screenshot cleanup pending review; Edge pending)
 
 ## Goal
 
@@ -10,7 +10,21 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
 
 ## In Progress
 
-- **v1.3.7 adaptive LinkedIn feed fix merged and partially released
+- **CWS marketing identity cleanup submitted (2026-08-26):** removed the
+  first hero screenshot containing a fictional personal/company profile from
+  both the localized and global CWS screenshot groups. Each group
+  now contains screenshots 2–5. The dashboard saved the listing, accepted the
+  review submission, and reports `Ожидает рассмотрения` with automatic
+  publication after approval enabled. The currently published listing may keep
+  showing the previous hero until review completes. The tracked old hero PNG
+  was removed locally so it cannot be re-uploaded accidentally; Git history can
+  restore it if needed. Its editable HTML source now uses the neutral copy
+  `Your profile` / `Your professional headline` and a built-in-imagegen neutral
+  avatar for both profile positions. Two direct raster-edit attempts were not
+  uploaded because imagegen returned `1586x992`, while CWS requires exactly
+  `1280x800` or `640x400`.
+
+- **v1.3.7 adaptive LinkedIn feed fix merged and released to CWS/Firefox
   (2026-08-26):** current
   `div[role="listitem"]` cards under `data-testid="mainFeed"` are now first-class
   post containers. If LinkedIn replaces all known wrappers again, a bounded
@@ -24,19 +38,26 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
   Chrome MV3 build, targeted
   Prettier, and production dependency audit passed. A sanitized live LinkedIn
   structure check found 5 current-selector cards and 1 exact promoted card with
-  no feed-root selection. Store-native automatic version updates remain the
+  no feed-root selection. A second authenticated Chrome sample found 11 current
+  cards and 2 exact `Promoted` labels; that browser profile had no LinkClean DOM
+  injection markers, so it was structure evidence rather than an installed-
+  extension runtime test. Store-native automatic version updates remain the
   delivery mechanism; no remote executable code was added. PR #5 merged as
   `8c753ac`; tag/GitHub Release `v1.3.7` contains Chrome, Firefox, and source
   ZIPs. Firefox AMO accepted the upload and reports public/current `1.3.7`
-  (reviewed `2026-08-26T05:51:17Z`). Chrome and Edge submission are not
-  complete: local and GitHub CWS refresh tokens return `invalid_grant`, and the
-  Edge Add-ons API returns `401`. The authenticated Chrome DevConsole tab is
-  open, but Chrome blocks extension-based automation on Web Store pages. PR #6
+  (reviewed `2026-08-26T05:51:17Z`). A live check in the authenticated Chrome
+  DevConsole for publisher `Mirana Apps` and account `t.konabayev@gmail.com`
+  now confirms CWS item `ipdckibncofmlnoaajkdhnbclbpgppdg` is published to
+  everyone with both draft and published package version `1.3.7`; the public
+  listing also reports version `1.3.7`, updated 2026-08-26, with 48 users.
+  Duplicate re-upload was intentionally skipped. Local/GitHub CWS refresh
+  tokens still need replacement so future releases can use automation. Edge
+  remains incomplete because the Edge Add-ons API returns `401`. PR #6
   (`7d59afa`) repaired the release workflow by using `wxt submit`, adding
   per-store manual retries, and allowing independent store attempts before an
-  aggregate failure. Remaining release work: upload the Chrome ZIP through the
-  open DevConsole and refresh the CWS OAuth token; then restore the Edge product
-  API credential or submit through the correct Partner Center account.
+  aggregate failure. Remaining release work: restore CWS OAuth automation,
+  then restore the Edge product API credential or submit through the correct
+  Partner Center account.
 
 - **v1.3.5 promoted-post hotfix prepared locally (2026-06-12)** after a second FormSubmit uninstall feedback ("It didn't hide promoted posts correctly", 2026-06-12 00:37 UTC). Root cause: LinkedIn's 2026 feed DOM rewrite (`data-testid="mainFeed"`, `article[data-id="main-feed-card"]`, actor line in `p[componentkey]`) was invisible to the v1.3.4 detector — the loose label collector explicitly skipped all `<p>` content as body copy, and only ~15 of 28 locales had promoted keywords. Evidence base: open-source LinkedinSponsorBlock (Hogwai, updated 2026-05-31) modern profile selectors. Fix: (1) new-DOM containers in discovery/identity; (2) structural promoted markers `data-sponsored-tracking-url`, `data-view-tracking-scope*="sponsored"`, `data-promoted-tracking-control-name`; (3) strict-equality matching of `<p>` metadata texts (full text, direct text nodes, direct child spans) against keyword sets — catches new-DOM labels without body-copy false positives; (4) promoted/suggested keywords expanded to ~40 languages incl. CJK/Thai (substring match only for no-space scripts, length ≥ 3); (5) hiding moved from inline `style.display` to injected CSS rule on `data-linkclean-hidden` with `!important` so LinkedIn re-renders can't un-hide posts; (6) mutation handling switched from resetting debounce to 250 ms throttle (no starvation during continuous feed mutations); (7) poll filter no longer scans `innerHTML` for "poll" (organic posts mentioning polls survive). Consilium council review (run 20260612T092359, R4 audit skipped: cursor quota) flagged and we fixed: tracking-scope matching anchored to quoted `"sponsored"` token + post root only (organic `sponsored-content-follow` interactions survive); CJK matching via scope-not-length (strict equality + token match inside LinkedIn-generated `sub-description` lines only, no substring rule); NFKC + zero-width stripping in `normalizeText`; leading+trailing throttle; static CSS pre-hide rules on LinkedIn's own sponsored attrs (no ad flash). Bonus fix found by new tests: container-div label collection false positive (short organic post mentioning "sponsored" in a `div[data-urn]` container was hidden even in v1.3.4) — label elements containing body copy are now excluded. Verified: `npm test` 33/33, `npm run typecheck`, `npm run build`, `npm run zip` (manifest `version=1.3.5`), Prettier clean. Committed locally as `87bf7be`.
 - **v1.3.5 submitted to all stores (2026-06-12, owner-approved)** via MiranaApps `publish.sh --all`: Chrome Web Store upload `SUCCEEDED` + publish HTTP 200, official v2 `fetchStatus` confirms `published=PUBLISHED submitted=PENDING_REVIEW version=1.3.5`; Firefox AMO validation 0 errors / 9 warnings (https://addons.mozilla.org/en-US/developers/addon/2994972/file/4847482/validation), published successfully; Edge Add-ons package uploaded and submitted for review (product `91c40340-8f47-426f-adb0-2ba51223fc92`). Direct default-branch push was blocked by the local permission classifier, so the work landed on `origin/master` through PR #2 (merge commit `67fb642`, merged 2026-06-12); local master is fast-forwarded and the feature branch is deleted.
@@ -92,14 +113,15 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
 
 ## Next Up
 
-1. Upload `.output/linkclean-1.3.7-chrome.zip` in the authenticated Chrome Web
-   Store DevConsole and submit it for review; then replace the revoked CWS
-   refresh token in local/GitHub secrets.
+1. Replace the revoked CWS refresh token in local/GitHub secrets so the next
+   release can publish through the repaired automated workflow; do not upload
+   `1.3.7` again because it is already public/current in CWS.
 1. Restore the Edge Add-ons API credential or switch Partner Center to the
    publisher account that owns product `91c40340-8f47-426f-adb0-2ba51223fc92`,
    upload the same Chrome ZIP, and verify the accepted operation before calling
    Edge `1.3.7` submitted.
-1. Monitor Edge Add-ons review/public listing propagation for LinkClean **v1.3.4**.
+1. After Edge credentials are restored and **v1.3.7** is submitted, monitor
+   Edge Add-ons review and public-listing propagation for that version.
 1. Watch uninstall feedback and CWS private WAU after the v1.3.4 fix; latest private CWS funnel is `552` impressions -> `48` page views -> `63` installs -> `7` WAU.
 1. Handle Firefox `data_collection_permissions` before the next AMO policy deadline; current build warning says future submissions may require it.
 1. Confirm whether the live CWS `1.3.0` publish used local `publish.sh` / manual CWS upload path and document the exact release path.
