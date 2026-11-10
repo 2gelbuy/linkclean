@@ -80,7 +80,7 @@ describe("feed connection status", () => {
     });
     expect(await getActiveFeedStatus()).toBe("no-site-access");
     expect(contains).toHaveBeenCalledWith({
-      origins: ["*://*.linkedin.com/*"],
+      origins: ["https://www.linkedin.com/*"],
     });
     contains.mockResolvedValue(true);
     expect(await getActiveFeedStatus()).toBe("reload-needed");

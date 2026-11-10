@@ -4,7 +4,9 @@ export type FeedStatus =
   | "reload-needed"
   | "no-site-access";
 
-const LINKEDIN_ORIGINS = ["*://*.linkedin.com/*"];
+// The feed lives on www.linkedin.com; checking that exact origin also covers
+// a partial grant that leaves the wildcard pattern unsatisfied.
+const LINKEDIN_ORIGINS = ["https://www.linkedin.com/*"];
 
 /** No reply can mean: not a LinkedIn tab, a LinkedIn tab opened before
  * install/update, or site access withheld. The extension cannot see the tab
