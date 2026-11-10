@@ -8,11 +8,9 @@ import {
 } from "@/lib/filters";
 import { trackEvent } from "@/lib/analytics";
 import { trackSession, getSettings, updateSettings } from "@/lib/storage";
-import {
-  getActiveFeedStatus,
-  getActiveFeedReport,
-  type FeedStatus,
-} from "@/lib/feed-status";
+import { reviewUrlFor, shouldAskForReview } from "@/lib/review-prompt";
+import type { FeedReport } from "@/lib/feed-status";
+import { getActiveFeedReport, type FeedStatus } from "@/lib/feed-status";
 import { feedbackBrowser, localFeedbackReport } from "@/lib/feedback";
 
 interface ToggleProps {
@@ -69,6 +67,7 @@ export default function App() {
   const [sessionCount, setSessionCount] = useState(0);
   const [reviewDismissed, setReviewDismissed] = useState(true);
   const [feedStatus, setFeedStatus] = useState<FeedStatus | null>(null);
+  const [feedReport, setFeedReport] = useState<FeedReport | null>(null);
   const [diagnostics, setDiagnostics] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
 
@@ -77,7 +76,10 @@ export default function App() {
     trackSession().then(setSessionCount);
     getSettings().then((s) => setReviewDismissed(s.reviewDismissed));
     getFilters().then(setFilters);
-    getActiveFeedStatus().then(setFeedStatus);
+    getActiveFeedReport().then((report) => {
+      setFeedReport(report);
+      setFeedStatus(report.status);
+    });
 
     const listener = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -310,10 +312,15 @@ export default function App() {
       </section>
 
       {/* Review Prompt */}
-      {sessionCount >= 3 && !reviewDismissed && (
+      {shouldAskForReview({
+        sessionCount,
+        dismissed: reviewDismissed,
+        filteringEnabled: filters.enabled,
+        report: feedReport,
+      }) && (
         <footer className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <a
-            href="https://chromewebstore.google.com/detail/linkclean/ipdckibncofmlnoaajkdhnbclbpgppdg/reviews"
+            href={reviewUrlFor(navigator.userAgent)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-blue-600 hover:text-blue-700"
