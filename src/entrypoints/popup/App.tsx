@@ -8,6 +8,12 @@ import {
 } from "@/lib/filters";
 import { trackEvent } from "@/lib/analytics";
 import { trackSession, getSettings, updateSettings } from "@/lib/storage";
+import {
+  getActiveFeedStatus,
+  getActiveFeedReport,
+  type FeedStatus,
+} from "@/lib/feed-status";
+import { feedbackBrowser, localFeedbackReport } from "@/lib/feedback";
 
 interface ToggleProps {
   label: string;
@@ -62,12 +68,16 @@ export default function App() {
   const [filters, setFilters] = useState<FilterSettings>(DEFAULT_FILTERS);
   const [sessionCount, setSessionCount] = useState(0);
   const [reviewDismissed, setReviewDismissed] = useState(true);
+  const [feedStatus, setFeedStatus] = useState<FeedStatus | null>(null);
+  const [diagnostics, setDiagnostics] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
 
   useEffect(() => {
     trackEvent("popup_open");
     trackSession().then(setSessionCount);
     getSettings().then((s) => setReviewDismissed(s.reviewDismissed));
     getFilters().then(setFilters);
+    getActiveFeedStatus().then(setFeedStatus);
 
     const listener = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -89,6 +99,31 @@ export default function App() {
     },
     [],
   );
+
+  async function showDiagnostics() {
+    const [report, browser] = await Promise.all([
+      getActiveFeedReport(),
+      feedbackBrowser(),
+    ]);
+    setDiagnostics(
+      localFeedbackReport(
+        chrome.runtime.getManifest().version,
+        browser,
+        report,
+        filters,
+      ),
+    );
+    setCopyStatus("");
+  }
+
+  async function copyDiagnostics() {
+    try {
+      await navigator.clipboard.writeText(diagnostics);
+      setCopyStatus("Copied. You can paste it into your report.");
+    } catch {
+      setCopyStatus("Select the report below and copy it with your keyboard.");
+    }
+  }
 
   return (
     <div className="w-[340px] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -136,6 +171,35 @@ export default function App() {
             <span className="text-xs text-gray-500 ml-1">all time</span>
           </div>
         </div>
+      </div>
+
+      <div
+        className="px-4 py-2 text-xs text-gray-600 dark:text-gray-300"
+        role="status"
+      >
+        {!filters.enabled ? (
+          "Filtering is paused."
+        ) : feedStatus === "connected" ? (
+          "Filtering your LinkedIn feed."
+        ) : feedStatus === null ? (
+          "Checking the active tab…"
+        ) : (
+          <>
+            <p>
+              {feedStatus === "other-page"
+                ? "Open your LinkedIn feed to filter posts."
+                : "Open or reload your LinkedIn feed to start filtering. If ads remain, check that LinkClean has access to linkedin.com in your browser’s extension settings."}
+            </p>
+            <a
+              href="https://www.linkedin.com/feed/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-1 text-blue-600 hover:text-blue-700"
+            >
+              Open LinkedIn feed
+            </a>
+          </>
+        )}
       </div>
 
       {/* Filters */}
@@ -198,6 +262,50 @@ export default function App() {
           disabled={!filters.enabled}
         />
       </main>
+
+      <section className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <a
+          href="https://konabayev.com/linkclean/support/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
+          Something not working? Report a problem
+        </a>
+        <button
+          type="button"
+          onClick={showDiagnostics}
+          className="block mt-2 text-xs text-gray-600 dark:text-gray-300 underline"
+        >
+          Show local diagnostics
+        </button>
+        {diagnostics && (
+          <div className="mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Stays on this device. No post text, profile details or browsing
+              history. Copy and attach only if you choose.
+            </p>
+            <textarea
+              aria-label="Local diagnostic report"
+              readOnly
+              value={diagnostics}
+              rows={6}
+              className="mt-2 w-full text-xs font-mono bg-gray-50 dark:bg-gray-800 rounded p-2"
+              onFocus={(event) => event.currentTarget.select()}
+            />
+            <button
+              type="button"
+              onClick={copyDiagnostics}
+              className="mt-1 text-xs text-blue-600"
+            >
+              Copy diagnostics
+            </button>
+            <p className="mt-1 text-xs text-gray-500" role="status">
+              {copyStatus}
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* Review Prompt */}
       {sessionCount >= 3 && !reviewDismissed && (

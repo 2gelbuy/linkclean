@@ -12,14 +12,14 @@ import {
   getFilters,
   incrementHiddenCount,
   type FilterSettings,
-} from "@/lib/filters";
+} from "../lib/filters";
 import {
   findLinkedInFeedPosts,
   isLinkedInFeedSurface,
   isPromotedSidebarLabel,
   isPromotionalSidebarWidget,
   shouldHideLinkedInPost,
-} from "@/lib/linkedin-detector";
+} from "../lib/linkedin-detector";
 
 const POST_HIDDEN_ATTR = "data-linkclean-hidden";
 const SIDEBAR_HIDDEN_ATTR = "data-linkclean-sidebar";
@@ -92,7 +92,7 @@ export default defineContentScript({
   matches: ["*://*.linkedin.com/*"],
   runAt: "document_idle",
 
-  async main() {
+  async main(ctx) {
     let filters = await getFilters();
     let pendingCount = 0;
     let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -100,11 +100,20 @@ export default defineContentScript({
     let lastProcessedAt = 0;
     let currentPathname = window.location.pathname;
 
-    chrome.storage.onChanged.addListener((changes, area) => {
+    const onFiltersChanged = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      area: string,
+    ) => {
       if (area === "local" && changes.linkclean_filters) {
         filters = changes.linkclean_filters.newValue ?? filters;
         scheduleProcessAll();
       }
+    };
+    chrome.storage.onChanged.addListener(onFiltersChanged);
+
+    ctx.addEventListener(window, "wxt:locationchange", () => {
+      currentPathname = window.location.pathname;
+      scheduleProcessAll();
     });
 
     function isActiveFeedSurface(): boolean {
@@ -319,7 +328,11 @@ export default defineContentScript({
 
     function shouldProcessMutation(mutation: MutationRecord): boolean {
       if (mutation.type === "childList") {
-        return mutation.addedNodes.length > 0;
+        // Virtualized cards can become organic by removing their ad label.
+        // Recheck removals as well as additions so a recycled card is restored.
+        return (
+          mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0
+        );
       }
 
       if (mutation.type === "characterData") {
@@ -363,5 +376,33 @@ export default defineContentScript({
 
     // Process existing posts + sidebar
     runProcessPass();
+
+    const onStatusRequest = (
+      message: { type?: string },
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response: unknown) => void,
+    ) => {
+      if (message?.type !== "linkclean:status") return;
+      const onFeed = isActiveFeedSurface();
+      sendResponse({
+        type: "linkclean:status",
+        onFeed,
+        cardsFound: onFeed ? findAllPosts().length : 0,
+        cardsHidden: onFeed
+          ? document.querySelectorAll(`[${POST_HIDDEN_ATTR}="true"]`).length
+          : 0,
+      });
+    };
+    chrome.runtime.onMessage.addListener(onStatusRequest);
+
+    ctx.onInvalidated(() => {
+      observer.disconnect();
+      if (processTimer) clearTimeout(processTimer);
+      if (flushTimer) clearTimeout(flushTimer);
+      chrome.storage.onChanged.removeListener(onFiltersChanged);
+      chrome.runtime.onMessage.removeListener(onStatusRequest);
+      restoreAllManagedElements();
+      document.getElementById(HIDE_STYLE_ID)?.remove();
+    });
   },
 });
