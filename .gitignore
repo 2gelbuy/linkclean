@@ -24,3 +24,8 @@ desktop.ini
 # Debug
 npm-debug.log*
 .env.local
+
+# Local secret backups
+.env*
+!.env.example
+logs/

@@ -7,15 +7,15 @@ export default defineBackground(() => {
   let sessionTotal = 0;
 
   chrome.runtime.onInstalled.addListener(async (details) => {
+    // Keep the existing plain URL; no diagnostics or identifiers in it.
+    chrome.runtime.setUninstallURL(UNINSTALL_URL);
     if (details.reason === "install") {
       await trackInstall();
-      chrome.runtime.setUninstallURL(UNINSTALL_URL);
     } else if (details.reason === "update") {
       await trackEvent("update", {
         from: details.previousVersion ?? "unknown",
         to: chrome.runtime.getManifest().version,
       });
-      chrome.runtime.setUninstallURL(UNINSTALL_URL);
     }
   });
 
