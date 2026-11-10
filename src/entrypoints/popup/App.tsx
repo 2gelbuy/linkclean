@@ -188,7 +188,9 @@ export default function App() {
             <p>
               {feedStatus === "other-page"
                 ? "Open your LinkedIn feed to filter posts."
-                : "Open or reload your LinkedIn feed to start filtering. If ads remain, check that LinkClean has access to linkedin.com in your browser’s extension settings."}
+                : feedStatus === "no-site-access"
+                  ? "LinkClean has no access to linkedin.com. Allow site access in your browser’s extension settings, then reload your LinkedIn feed."
+                  : "Open your LinkedIn feed to filter posts. If it is already open, reload that tab."}
             </p>
             <a
               href="https://www.linkedin.com/feed/"
