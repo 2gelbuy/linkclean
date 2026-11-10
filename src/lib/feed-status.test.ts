@@ -5,14 +5,12 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("feed connection status", () => {
   it("accepts only bounded card counts from the active tab", async () => {
-    const sendMessage = vi
-      .fn()
-      .mockResolvedValue({
-        type: "linkclean:status",
-        onFeed: true,
-        cardsFound: 12,
-        cardsHidden: 2,
-      });
+    const sendMessage = vi.fn().mockResolvedValue({
+      type: "linkclean:status",
+      onFeed: true,
+      cardsFound: 12,
+      cardsHidden: 2,
+    });
     vi.stubGlobal("chrome", {
       tabs: { query: vi.fn().mockResolvedValue([{ id: 7 }]), sendMessage },
     });
@@ -66,6 +64,27 @@ describe("feed connection status", () => {
         sendMessage: vi.fn().mockResolvedValue(undefined),
       },
     });
+    expect(await getActiveFeedStatus()).toBe("reload-needed");
+  });
+
+  it("asks for site access only when the browser reports it is withheld", async () => {
+    const contains = vi.fn().mockResolvedValue(false);
+    vi.stubGlobal("chrome", {
+      tabs: {
+        query: vi.fn().mockResolvedValue([{ id: 7 }]),
+        sendMessage: vi
+          .fn()
+          .mockRejectedValue(new Error("Receiving end does not exist")),
+      },
+      permissions: { contains },
+    });
+    expect(await getActiveFeedStatus()).toBe("no-site-access");
+    expect(contains).toHaveBeenCalledWith({
+      origins: ["*://*.linkedin.com/*"],
+    });
+    contains.mockResolvedValue(true);
+    expect(await getActiveFeedStatus()).toBe("reload-needed");
+    contains.mockRejectedValue(new Error("unavailable"));
     expect(await getActiveFeedStatus()).toBe("reload-needed");
   });
 });
