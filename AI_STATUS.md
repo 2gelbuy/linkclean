@@ -104,7 +104,6 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
 1. Sync scripts to VPS + set up daily cron for auto-scan.
 1. Telegram notifications (need chat_id).
 1. Register on: Hashnode, ProductHunt, AlternativeTo, SaaSHub (manual Google OAuth).
-1. GA4 API secret.
 1. Revisit monetization only after traction/reviews improve; no visible Pro/paywall in v1.3.2.
 1. Test auto-scan.sh — first real niche scan.
 
@@ -113,7 +112,7 @@ Success = 1000+ active users and positive reviews before reintroducing any paid 
 - **WXT framework** for cross-browser extension dev
 - **Text-based detection** (not CSS classes) — LinkedIn obfuscates class names
 - **Audience-first monetization** — no visible Pro/paywall in v1.3.2; revisit paid tier only after meaningful traction
-- **GA4 Measurement Protocol** — privacy-first, no cookies
+- **Local-only usage counters** — GA4 Measurement Protocol code and its host permission removed in 1.3.10; nothing leaves the browser
 - **Multilingual keyword matching** — 11 languages for promoted, 7 for suggested
 
 <!-- AUTO:GIT_LOG -->
