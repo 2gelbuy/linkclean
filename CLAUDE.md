@@ -50,7 +50,6 @@ Root Claude rules apply first. These local notes only add project-specific conte
 ## Known Issues
 
 - Published CRX has only 1 locale (en), code has 28 — need to re-publish
-- GA4 host_permission in manifest but API secret not configured (dead permission)
 - 0 tests (Vitest configured but no test files)
 - No GitHub Actions CI/CD workflow
 
